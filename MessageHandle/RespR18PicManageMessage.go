@@ -48,6 +48,9 @@ func (obj *PicManage) ensureFolderExists() error {
 }
 func (n *PicManage) HandlerInit() {
 	n.maxImages = 10
+
+	n.folderPath = "PhotoGallery" // 默认路径
+
 	var picManagekeywordHandlers = map[string]func(MessageModel.Message){
 		"随机涩图":  n.RandomPic,
 		"Tag涩图": n.RandomPicByTagOrNum,
@@ -149,49 +152,59 @@ func (n *PicManage) fetchImageURL(reqParams *ReqParam) (*[]MessageModel.PixivIma
 	return &apiResp.Data, nil
 }
 
-// 下载并保存图片
-func (n *PicManage) downloadImage(imageURL string) error {
+// 下载并保存图片，返回图片base64编码和文件路径
+func (n *PicManage) downloadImage(imageURL string, uid int) (error, string) {
 	// 生成唯一文件名（时间戳）
 	err := n.ensureFolderExists()
 	if err != nil {
 		fmt.Println("操作文件失败")
-		return err
+		return err, ""
 	}
-	err = n.ensureFolderExists()
+	err = n.cleanFolderIfNeeded()
 	if err != nil {
 		fmt.Println("清空文件夹失败")
-		return err
+		return err, ""
 	}
 
-	fileName := time.Now().Format("20060102_150405") + ".jpg"
+	fileName := fmt.Sprintf("%d_%s.jpg", uid, time.Now().Format("20060102-150405"))
 	filePath := filepath.Join(n.folderPath, fileName)
 
 	// 发送 HTTP 请求获取图片
 	resp, err := http.Get(imageURL)
 	if err != nil {
-		return fmt.Errorf("下载图片失败: %v", err)
+		return fmt.Errorf("下载图片失败: %v", err), ""
 	}
 	defer resp.Body.Close()
 
 	// 检查 HTTP 状态码
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("下载失败，状态码: %d", resp.StatusCode)
+		return fmt.Errorf("下载失败，状态码: %d", resp.StatusCode), ""
 	}
 
 	// 创建文件并写入数据
 	file, err := os.Create(filePath)
 	if err != nil {
-		return fmt.Errorf("创建文件失败: %v", err)
+		return fmt.Errorf("创建文件失败: %v", err), ""
 	}
 	defer file.Close()
 
 	_, err = io.Copy(file, resp.Body)
 	if err != nil {
-		return fmt.Errorf("保存图片失败: %v", err)
+		return fmt.Errorf("保存图片失败: %v", err), ""
 	}
 
 	fmt.Println("✅ 图片已保存:", filePath)
-	return nil
+	err = ChangePicMD(filePath)
+	if err != nil {
+		return fmt.Errorf("添加不可见数据失败: %v", err), ""
+	}
+	// 获取图片的 Base64 编码
+	base64Str, err := imageToBase64(filePath)
+	if err != nil {
+		return fmt.Errorf("转换图片为Base64失败: %v", err), ""
+	}
+
+	return nil, base64Str
 }
 
 // 清理文件夹
@@ -217,16 +230,29 @@ func (n *PicManage) cleanFolderIfNeeded() error {
 // 随机涩图
 func (n *PicManage) RandomPic(message MessageModel.Message) {
 	var Params ReqParam
+	//var path string
+	//var Paths []string
+	var ImageBase64Str string
+	var ImageBase64Strs []string
 	Params.R18 = 0
 	Params.Tags = nil
 	Params.Num = 1
 	PicInfo, err := n.fetchImageURL(&Params)
 	if err != nil {
+		return
+	}
+	for _, s := range *PicInfo {
+		err, ImageBase64Str = n.downloadImage(s.URLs.Original, s.PID)
+		//Paths = append(Paths, path)
+		ImageBase64Strs = append(ImageBase64Strs, ImageBase64Str)
+	}
+
+	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-		handler(ReqApiConst.SEND_GROUP_MSG, "禁言请求", message.GroupID, MessageModel.SendRandomPic(message.GroupID, PicInfo))
+		handler(ReqApiConst.SEND_GROUP_MSG, "禁言请求", message.GroupID, MessageModel.SendRandomPic(ImageBase64Strs, message.GroupID, PicInfo))
 	}
 
 }
@@ -234,23 +260,30 @@ func (n *PicManage) RandomPic(message MessageModel.Message) {
 // 随机涩图
 func (n *PicManage) RandomPicByTagOrNum(message MessageModel.Message) {
 
-	GetPicNum, Tags, err := ExtractTags(message.RawMessage)
+	_, Tags, err := ExtractTags(message.RawMessage)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	var Params ReqParam
+	var ImageBase64Str string
+	var ImageBase64Strs []string
 	Params.R18 = 0
 	Params.Tags = Tags
-	Params.Num = GetPicNum
+	Params.Num = 1
 
 	PicInfo, err := n.fetchImageURL(&Params)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	for _, s := range *PicInfo {
+		err, ImageBase64Str = n.downloadImage(s.URLs.Original, s.PID)
+		//Paths = append(Paths, path)
+		ImageBase64Strs = append(ImageBase64Strs, ImageBase64Str)
+	}
 	if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-		handler(ReqApiConst.SEND_GROUP_MSG, "禁言请求", message.GroupID, MessageModel.SendRandomPic(message.GroupID, PicInfo))
+		handler(ReqApiConst.SEND_GROUP_MSG, "禁言请求", message.GroupID, MessageModel.SendRandomPic(ImageBase64Strs, message.GroupID, PicInfo))
 	}
 }
 

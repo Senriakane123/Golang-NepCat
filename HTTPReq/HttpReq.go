@@ -12,63 +12,6 @@ import (
 // 定义 API 处理函数类型
 type ReqHandler func(ReqMessage string, RespMessage string, GroupId int64, Resp map[string]interface{})
 
-func HandleMessage2(ReqMessage string, RespMessage string, GroupId int64, Resp map[string]interface{}) {
-	url := "http://127.0.0.1:3000/" + ReqMessage
-	var message map[string]interface{}
-	if Resp != nil {
-		message = Resp
-	} else {
-		// OneBot 11 服务器地址
-
-		// 发送的消息内容
-		message = map[string]interface{}{
-			"group_id": GroupId,     // 替换为你的QQ群号
-			"message":  RespMessage, // 发送的消息内容
-		}
-
-	}
-
-	// 将 Go 的 map 转换为 JSON
-	jsonData, err := json.Marshal(message)
-	if err != nil {
-		fmt.Println("JSON 序列化失败:", err)
-		return
-	}
-
-	// 创建 HTTP 请求
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		fmt.Println("创建请求失败:", err)
-		return
-	}
-
-	// 设置请求头
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer your_access_token") // 如果需要身份验证
-
-	// 发送请求
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println("请求失败:", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	// 读取响应数据
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("读取响应失败:", err)
-		return
-	}
-
-	// 输出 API 返回结果
-	fmt.Println("状态码:", resp.Status)
-	fmt.Println("响应数据:", string(body))
-
-	//WebSocket 服务器地址（注意修改为你的 go-cqhttp 监听地址）
-}
-
 func HandleMessage(ReqMessage string, RespMessage string, GroupId int64, Resp map[string]interface{}) {
 	url := "http://127.0.0.1:3000/" + ReqMessage
 	var message map[string]interface{}

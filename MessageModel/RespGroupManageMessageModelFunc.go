@@ -39,15 +39,20 @@ func GroupBanRespMessage(GroupId int64, BanBoolen bool) map[string]interface{} {
 	return message
 }
 
-func SendRandomPic(GroupId int64, info *[]PixivImage) map[string]interface{} {
+func SendRandomPic(ImageBase64strs []string, GroupId int64, info *[]PixivImage) map[string]interface{} {
 	fmt.Println(info)
 
 	// 消息列表
 	messages := []map[string]interface{}{}
-
+	num := 0
+	ErrImageNum := 0
 	// 遍历所有图片
 	for _, img := range *info {
 		// 追加文本消息
+		if ImageBase64strs[num] == "" {
+			ErrImageNum++
+			continue
+		}
 		messages = append(messages, map[string]interface{}{
 			"type": "text",
 			"data": map[string]interface{}{
@@ -55,22 +60,30 @@ func SendRandomPic(GroupId int64, info *[]PixivImage) map[string]interface{} {
 					img.Author, img.Title, img.PID, img.URLs.Original),
 			},
 		})
-
-		// 追加图片消息
 		messages = append(messages, map[string]interface{}{
 			"type": "image",
 			"data": map[string]interface{}{
-				"file": img.URLs.Original,
+				"file": ImageBase64strs[num],
 			},
 		})
+		num++
 	}
+
+	messages = append(messages, map[string]interface{}{
+		"type": "text",
+		"data": map[string]interface{}{
+			"text": fmt.Sprintf("获取图片成功：%d，失败：%d",
+				len(*info)-ErrImageNum, ErrImageNum),
+		},
+	})
 
 	// 构造返回数据
 	message := map[string]interface{}{
 		"group_id": GroupId, // 群号
-		"message":  messages,
+		//"message": "[CQ:at,qq="+Int64toString(UserId)+"]",
+		"message": messages,
 	}
 
-	fmt.Println(message)
+	//fmt.Println(message)
 	return message
 }

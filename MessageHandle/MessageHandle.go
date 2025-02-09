@@ -59,10 +59,21 @@ func GroupMessageHandle(message MessageModel.Message) {
 					if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
 						handler(ReqApiConst.SEND_GROUP_MSG, BuildReplyMessage(message.UserID, MessageModel.GetChildServerList6()), message.GroupID, MessageModel.NormalRespMessage(message.GroupID, BuildReplyMessage(message.UserID, MessageModel.GetChildServerList6())))
 					}
+				case "7":
+					if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+						handler(ReqApiConst.SEND_GROUP_MSG, BuildReplyMessage(message.UserID, MessageModel.GetChildServerList6()), message.GroupID, MessageModel.NormalRespMessage(message.GroupID, BuildReplyMessage(message.UserID, MessageModel.GetChildServerList6())))
+					}
 				}
 
 			}
 		}
 
+	}
+
+}
+
+func ErrMessageHandle(Repmessage string, message MessageModel.Message) {
+	if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+		handler(ReqApiConst.SEND_GROUP_MSG, BuildReplyMessage(message.UserID, MessageModel.GetChildServerList6()), message.GroupID, MessageModel.NormalRespMessage(message.GroupID, BuildReplyMessage(message.UserID, MessageModel.GetChildServerList6())))
 	}
 }

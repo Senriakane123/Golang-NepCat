@@ -1,7 +1,11 @@
 package MessageHandle
 
 import (
+	"encoding/base64"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -189,4 +193,50 @@ func ExtractTags(input string) (int, []string, error) {
 	})
 
 	return num, tags, nil
+}
+
+// 将图片文件转换为Base64编码，并根据图片类型添加前缀
+func imageToBase64(filePath string) (string, error) {
+	// 读取文件
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", fmt.Errorf("打开文件失败: %v", err)
+	}
+	defer file.Close()
+
+	// 读取文件内容并获取文件类型
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		return "", fmt.Errorf("读取文件失败: %v", err)
+	}
+
+	// 检测文件类型
+	contentType := http.DetectContentType(fileBytes)
+	var base64Prefix string
+
+	// 根据文件类型选择合适的前缀
+	switch contentType {
+	case "image/jpeg":
+		base64Prefix = "data:image/jpeg;base64,"
+	case "image/png":
+		base64Prefix = "data:image/png;base64,"
+	case "image/gif":
+		base64Prefix = "data:image/gif;base64,"
+	default:
+		return "", fmt.Errorf("不支持的图片格式: %s", contentType)
+	}
+
+	// 将文件内容编码为Base64
+	base64Str := base64.StdEncoding.EncodeToString(fileBytes)
+
+	// 添加前缀并返回
+	return base64Prefix + base64Str, nil
+}
+
+func ChangePicMD(filepath string) error {
+	file, err := os.OpenFile(filepath, os.O_APPEND|os.O_WRONLY, 0644)
+	defer file.Close()
+	file.WriteString("\n") // 添加不可见字符
+	fmt.Println("图片数据已修改")
+	return err
 }

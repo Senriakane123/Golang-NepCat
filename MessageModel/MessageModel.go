@@ -30,13 +30,15 @@ type NorMessageModel struct {
 
 // PixivImage 结构体表示单个图片信息
 type PixivImage struct {
-	PID    int      `json:"pid"`
-	Title  string   `json:"title"`
-	Author string   `json:"author"`
-	Tags   []string `json:"tags"`
-	URLs   struct {
+	ID     uint     `gorm:"primaryKey;autoIncrement" json:"id"`      // 设为主键，自增
+	PID    int      `gorm:"uniqueIndex" json:"pid"`                  // 唯一索引
+	Title  string   `gorm:"type:varchar(255);not null" json:"title"` // 设定字符串长度
+	Author string   `gorm:"type:varchar(255);not null" json:"author"`
+	Tags   []string `gorm:"serializer:json" json:"tags"` // JSON 序列化存储
+
+	URLs struct {
 		Original string `json:"original"`
-	} `json:"urls"`
+	} `gorm:"embedded" json:"urls"` // 使用 embedded 方式存储
 }
 
 type APIResponse struct {
