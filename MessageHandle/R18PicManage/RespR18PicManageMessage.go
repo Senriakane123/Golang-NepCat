@@ -253,7 +253,7 @@ func (n *PicManage) RandomPic(message MessageModel.Message) {
 		return
 	}
 	if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-		handler(ReqApiConst.SEND_GROUP_MSG, "禁言请求", message.GroupID, MessageModel.SendRandomPic(ImageBase64Strs, message.GroupID, PicInfo))
+		handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.SendRandomPic(ImageBase64Strs, message.GroupID, PicInfo))
 	}
 
 }
@@ -284,7 +284,7 @@ func (n *PicManage) RandomPicByTagOrNum(message MessageModel.Message) {
 		ImageBase64Strs = append(ImageBase64Strs, ImageBase64Str)
 	}
 	if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-		handler(ReqApiConst.SEND_GROUP_MSG, "禁言请求", message.GroupID, MessageModel.SendRandomPic(ImageBase64Strs, message.GroupID, PicInfo))
+		handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.SendRandomPic(ImageBase64Strs, message.GroupID, PicInfo))
 	}
 }
 

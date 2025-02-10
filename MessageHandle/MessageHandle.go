@@ -21,23 +21,22 @@ func MessageHandle(message MessageModel.Message) {
 		//解析是否需要服务
 		ServerMach := Tool.ParseServiceCommand(message.RawMessage)
 		if len(ServerMach) == 0 {
-			//处理各种禁言和群权限管理
-			//if HandleGroupManageMessage(message) {
-			//	return
-			//}
-			//群管理功能包
+
+			//游戏功能包
 			var GameMessageApi GameLogic.GameManageHandle
 			GameMessageApi.HandlerInit()
 			if GameMessageApi.HandleGameManageMessage(message) {
 				return
 			}
 
+			//群管理功能包
 			var GroupMessageAPi GroupMessageHandle.GroupManageHandle
 			GroupMessageAPi.HandlerInit()
 			if GroupMessageAPi.HandleGroupManageMessage(message) {
 				return
 			}
 
+			//涩图功能包
 			var RandomPic R18PicManage.PicManage
 			RandomPic.HandlerInit()
 			if RandomPic.HandlePicManageMessage(message) {
@@ -48,7 +47,7 @@ func MessageHandle(message MessageModel.Message) {
 			for _, QQNumber := range QQNumberList {
 				if message.SelfID == Tool.StringToInt64(QQNumber) {
 					if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-						handler(ReqApiConst.SEND_GROUP_MSG, Tool.BuildReplyMessage(message.UserID, MessageModel.GetServerList()), message.GroupID, MessageModel.NormalRespMessage(message.GroupID, Tool.BuildReplyMessage(message.UserID, MessageModel.GetServerList())))
+						handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+Tool.BuildReplyMessage(MessageModel.GetServerList())))
 					}
 				}
 
@@ -63,19 +62,19 @@ func MessageHandle(message MessageModel.Message) {
 				case "4":
 				case "5":
 					if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-						handler(ReqApiConst.SEND_GROUP_MSG, Tool.BuildReplyMessage(message.UserID, MessageModel.GetChildServerList5()), message.GroupID, MessageModel.NormalRespMessage(message.GroupID, Tool.BuildReplyMessage(message.UserID, MessageModel.GetChildServerList5())))
+						handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+Tool.BuildReplyMessage(MessageModel.GetChildServerList5())))
 					}
 				case "6":
 					if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-						handler(ReqApiConst.SEND_GROUP_MSG, Tool.BuildReplyMessage(message.UserID, MessageModel.GetChildServerList6()), message.GroupID, MessageModel.NormalRespMessage(message.GroupID, Tool.BuildReplyMessage(message.UserID, MessageModel.GetChildServerList6())))
+						handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+Tool.BuildReplyMessage(MessageModel.GetChildServerList6())))
 					}
 				case "7":
 					if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-						handler(ReqApiConst.SEND_GROUP_MSG, Tool.BuildReplyMessage(message.UserID, MessageModel.GetChildServerList6()), message.GroupID, MessageModel.NormalRespMessage(message.GroupID, Tool.BuildReplyMessage(message.UserID, MessageModel.GetChildServerList6())))
+						handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+Tool.BuildReplyMessage(MessageModel.GetChildServerList6())))
 					}
 				case "8":
 					if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-						handler(ReqApiConst.SEND_GROUP_MSG, Tool.BuildReplyMessage(message.UserID, MessageModel.GetChildServerList8()), message.GroupID, MessageModel.NormalRespMessage(message.GroupID, Tool.BuildReplyMessage(message.UserID, MessageModel.GetChildServerList8())))
+						handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+Tool.BuildReplyMessage(MessageModel.GetChildServerList8())))
 					}
 
 				}
@@ -89,6 +88,6 @@ func MessageHandle(message MessageModel.Message) {
 
 func ErrMessageHandle(Repmessage string, message MessageModel.Message) {
 	if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-		handler(ReqApiConst.SEND_GROUP_MSG, Tool.BuildReplyMessage(message.UserID, MessageModel.GetChildServerList6()), message.GroupID, MessageModel.NormalRespMessage(message.GroupID, Tool.BuildReplyMessage(message.UserID, MessageModel.GetChildServerList6())))
+		handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+Tool.BuildReplyMessage(MessageModel.GetChildServerList6())))
 	}
 }

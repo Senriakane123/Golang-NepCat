@@ -44,7 +44,7 @@ var childServerMenu8 = []string{
 	"4 注册（注册格式为：@Bot用户注册-宠物ID）",
 	"5 BOSS战",
 	"6 道具箱",
-	"7 获取可注册宠物列表（@Bot获取可注册宠物列表）",
+	"7 获取可注册宠物列表（@Bot获取注册宠物列表）",
 }
 
 func GetServerList() []string {

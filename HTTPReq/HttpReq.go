@@ -10,26 +10,26 @@ import (
 )
 
 // 定义 API 处理函数类型
-type ReqHandler func(ReqMessage string, RespMessage string, GroupId int64, Resp map[string]interface{})
+type ReqHandler func(ReqMessage string, Resp map[string]interface{})
 
-func HandleMessage(ReqMessage string, RespMessage string, GroupId int64, Resp map[string]interface{}) {
+func HandleMessage(ReqMessage string, Resp map[string]interface{}) {
 	url := "http://127.0.0.1:3000/" + ReqMessage
-	var message map[string]interface{}
-	if Resp != nil {
-		message = Resp
-	} else {
-		// OneBot 11 服务器地址
-
-		// 发送的消息内容
-		message = map[string]interface{}{
-			"group_id": GroupId,     // 替换为你的QQ群号
-			"message":  RespMessage, // 发送的消息内容
-		}
-
-	}
+	//var message map[string]interface{}
+	//if Resp != nil {
+	//	message = Resp
+	//} else {
+	//	// OneBot 11 服务器地址
+	//
+	//	// 发送的消息内容
+	//	message = map[string]interface{}{
+	//		"group_id": GroupId,     // 替换为你的QQ群号
+	//		"message":  RespMessage, // 发送的消息内容
+	//	}
+	//
+	//}
 
 	// 将 Go 的 map 转换为 JSON
-	jsonData, err := json.Marshal(message)
+	jsonData, err := json.Marshal(Resp)
 	if err != nil {
 		fmt.Println("JSON 序列化失败:", err)
 		return

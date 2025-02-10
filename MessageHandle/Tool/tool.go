@@ -63,13 +63,13 @@ func StringToInt64(str string) int64 {
 }
 
 // 生成带 CQ:at 和列表的消息
-func BuildReplyMessage(userID int64, Message []string) string {
+func BuildReplyMessage(Message []string) string {
 	var builder strings.Builder
 
-	// 添加 @ 用户
-	builder.WriteString("[CQ:at,qq=")
-	builder.WriteString(strconv.FormatInt(userID, 10))
-	builder.WriteString("]\n")
+	//// 添加 @ 用户
+	//builder.WriteString("[CQ:at,qq=")
+	//builder.WriteString(strconv.FormatInt(userID, 10))
+	//builder.WriteString("]\n")
 
 	// 添加列表内容
 	// 遍历 Message 列表并动态添加
@@ -241,9 +241,9 @@ func ChangePicMD(filepath string) error {
 	return err
 }
 
-func ExtractNumber(text string) (string, error) {
-	// 编译正则表达式，匹配 "宠物" 后面的数字
-	re := regexp.MustCompile(`宠物(\d+)`)
+func ExtractPetIdNumber(text string) (string, error) {
+	// 编译正则表达式，匹配 "用户注册-" 后面的数字（包括负数）
+	re := regexp.MustCompile(`用户注册-?(\d+)`)
 	matches := re.FindStringSubmatch(text)
 
 	// 检查是否匹配成功

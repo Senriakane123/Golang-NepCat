@@ -18,7 +18,7 @@ type Message struct {
 
 type SendDer struct {
 	UserID   int64  `json:"user_id"`
-	NickName string `json:"nick_name"`
+	NickName string `json:"nickname"`
 	Card     string `json:"card"`
 	Role     string `json:"role"`
 }

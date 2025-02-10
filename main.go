@@ -1,6 +1,7 @@
 package main
 
 import (
+	"NepcatGoApiReq/Database/DBControlApi"
 	"NepcatGoApiReq/HTTPReq"
 	"NepcatGoApiReq/Websocket"
 )
@@ -8,7 +9,7 @@ import (
 func main() {
 	HTTPReq.InitAllApis()
 	//DBControlApi
-	//DBControlApi.InitDatabase()
+	DBControlApi.InitDatabase()
 	go Websocket.MessageHandler()
 
 	Websocket.WebSocketInit()

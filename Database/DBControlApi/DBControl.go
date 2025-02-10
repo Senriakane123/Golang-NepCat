@@ -7,43 +7,44 @@ type DBcontrol struct {
 	DB *gorm.DB
 }
 
-func (bcontrol *DBcontrol) Where(model interface{}, query interface{}, args ...interface{}) ([]interface{}, error) {
+func (bcontrol *DBcontrol) Where(tablename string, model interface{}, query interface{}, args ...interface{}) (interface{}, error) {
 	// 使用 GORM 的 Where 方法执行查询
-	result := bcontrol.DB.Where(query, args...).Find(model)
+	result := bcontrol.DB.Table(tablename).Where(query, args...).Find(model)
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return model.([]interface{}), nil
+	// 返回查询到的结果，保持原始的 model 类型
+	return model, nil
 }
 
 // Get 查询数据库中所有记录
-func (bcontrol *DBcontrol) Get(Model interface{}) (interface{}, error) {
-	if result := bcontrol.DB.Find(&Model); result.Error != nil {
+func (bcontrol *DBcontrol) Get(Model interface{}, tablename string) (interface{}, error) {
+	result := bcontrol.DB.Table(tablename).Find(Model)
+	if result.Error != nil {
 		return nil, result.Error
-	} else {
-		return Model, nil
 	}
+	return Model, nil
 }
 
 // Create 插入记录
-func (bcontrol *DBcontrol) Create(model interface{}) error {
-	if result := bcontrol.DB.Create(model); result.Error != nil {
+func (bcontrol *DBcontrol) Create(model interface{}, tablename string) error {
+	if result := bcontrol.DB.Table(tablename).Create(model); result.Error != nil {
 		return result.Error
 	}
 	return nil
 }
 
 // Update 更新记录
-func (bcontrol *DBcontrol) Update(model interface{}, updates map[string]interface{}) error {
-	if result := bcontrol.DB.Model(model).Updates(updates); result.Error != nil {
+func (bcontrol *DBcontrol) Update(updates map[string]interface{}, tablename string) error {
+	if result := bcontrol.DB.Table(tablename).Updates(updates); result.Error != nil {
 		return result.Error
 	}
 	return nil
 }
 
 // Delete 删除记录
-func (bcontrol *DBcontrol) Delete(model interface{}) error {
-	if result := bcontrol.DB.Delete(model); result.Error != nil {
+func (bcontrol *DBcontrol) Delete(model interface{}, tablename string) error {
+	if result := bcontrol.DB.Table(tablename).Delete(model); result.Error != nil {
 		return result.Error
 	}
 	return nil

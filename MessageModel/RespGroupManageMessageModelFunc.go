@@ -2,13 +2,46 @@ package MessageModel
 
 import (
 	"fmt"
+	"strings"
 )
 
 func NormalRespMessage(GroupId int64, RespMessage string) map[string]interface{} {
+	// 构造返回数据
+
+	// 构造返回数据
 	message := map[string]interface{}{
-		"group_id": GroupId,     // 替换为你的QQ群号
-		"message":  RespMessage, // 发送的消息内容
+		"group_id": GroupId, // 群号
+		//"message": "[CQ:at,qq="+Int64toString(UserId)+"]",
+		"message": RespMessage,
 	}
+
+	return message
+}
+
+func NormalRespMessageType2(GroupId int64, RespMessage []string) map[string]interface{} {
+
+	var builder strings.Builder
+	for _, item := range RespMessage {
+		builder.WriteString(item)
+		builder.WriteString("\n")
+	}
+
+	//return builder.String()
+
+	messages := []map[string]interface{}{}
+
+	messages = append(messages, map[string]interface{}{
+		"type": "text",
+		"data": map[string]interface{}{
+			"text": builder.String(),
+		},
+	})
+
+	message := map[string]interface{}{
+		"group_id": GroupId,  // 替换为你的QQ群号
+		"message":  messages, // 发送的消息内容
+	}
+
 	return message
 }
 

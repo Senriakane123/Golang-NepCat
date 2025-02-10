@@ -62,11 +62,11 @@ func (n *GroupManageHandle) HandleGroupManageMessage(message MessageModel.Messag
 func handleGroupBan(message MessageModel.Message) {
 	if message.Sender.Role == "owner" || message.Sender.Role == "admin" {
 		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SET_GROUP_WHOLE_BAN]; exists {
-			handler(ReqApiConst.SET_GROUP_WHOLE_BAN, "禁言请求", message.GroupID, MessageModel.GroupBanRespMessage(message.GroupID, true))
+			handler(ReqApiConst.SET_GROUP_WHOLE_BAN, MessageModel.GroupBanRespMessage(message.GroupID, true))
 		}
 	} else {
 		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-			handler(ReqApiConst.SEND_GROUP_MSG, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]"+"请求格式错误或用户不具备管理员权限", message.GroupID, MessageModel.NormalRespMessage(message.GroupID, "请求格式错误或用户不具备管理员权限"))
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]"+"请求格式错误或用户不具备管理员权限"))
 		}
 		return
 	}
@@ -77,11 +77,11 @@ func handleGroupBan(message MessageModel.Message) {
 func handleUnbanGroup(message MessageModel.Message) {
 	if message.Sender.Role == "owner" || message.Sender.Role == "admin" {
 		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SET_GROUP_WHOLE_BAN]; exists {
-			handler(ReqApiConst.SET_GROUP_WHOLE_BAN, "禁言请求", message.GroupID, MessageModel.GroupBanRespMessage(message.GroupID, false))
+			handler(ReqApiConst.SET_GROUP_WHOLE_BAN, MessageModel.GroupBanRespMessage(message.GroupID, false))
 		}
 	} else {
 		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-			handler(ReqApiConst.SEND_GROUP_MSG, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]"+"请求格式错误或用户不具备管理员权限", message.GroupID, MessageModel.NormalRespMessage(message.GroupID, "请求格式错误或用户不具备管理员权限"))
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]"+"请求格式错误或用户不具备管理员权限"))
 		}
 		return
 	}
@@ -97,13 +97,13 @@ func KickSomeBody(message MessageModel.Message) {
 			}
 			if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SET_GROUP_KICK]; exists {
 
-				handler(ReqApiConst.SET_GROUP_KICK, "踢人请求", message.GroupID, MessageModel.KickRespMessage(message.GroupID, Tool.StringToInt64(v), false))
+				handler(ReqApiConst.SET_GROUP_KICK, MessageModel.KickRespMessage(message.GroupID, Tool.StringToInt64(v), false))
 			}
 			return
 		}
 	} else {
 		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-			handler(ReqApiConst.SEND_GROUP_MSG, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]"+"请求格式错误或用户不具备管理员权限", message.GroupID, MessageModel.NormalRespMessage(message.GroupID, "请求格式错误或用户不具备管理员权限"))
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]"+"请求格式错误或用户不具备管理员权限"))
 		}
 		return
 	}
@@ -125,13 +125,13 @@ func handleBan(message MessageModel.Message) {
 				//for _, n := range BanQQNumberList {
 				//
 				//}
-				handler(ReqApiConst.SET_GROUP_BAN, "禁言请求", message.GroupID, MessageModel.BanRespMessage(message.GroupID, Tool.StringToInt64(v), int64(Time)))
+				handler(ReqApiConst.SET_GROUP_BAN, MessageModel.BanRespMessage(message.GroupID, Tool.StringToInt64(v), int64(Time)))
 			}
 			return
 		}
 	} else {
 		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-			handler(ReqApiConst.SEND_GROUP_MSG, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]"+"请求格式错误或用户不具备管理员权限", message.GroupID, MessageModel.NormalRespMessage(message.GroupID, "请求格式错误或用户不具备管理员权限"))
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]"+"请求格式错误或用户不具备管理员权限"))
 		}
 		return
 	}
