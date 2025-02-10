@@ -7,6 +7,8 @@ import (
 
 func main() {
 	HTTPReq.InitAllApis()
+	//DBControlApi
+	//DBControlApi.InitDatabase()
 	go Websocket.MessageHandler()
 
 	Websocket.WebSocketInit()

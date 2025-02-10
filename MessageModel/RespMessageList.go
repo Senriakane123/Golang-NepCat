@@ -10,7 +10,8 @@ var serverMenu = []string{
 	"4 尝试接入deepseek（正在开发中）",
 	"5 群管理",
 	"6 随机涩图 ",
-	"7 更换机器人头像（需要向机器人所有者获取管理权限） ",
+	"7 更换机器人头像（需要向机器人所有者获取管理权限，目前是测试开发阶段） ",
+	"8 宠物系统（测试开发阶段）",
 }
 
 var childServerMenu5 = []string{
@@ -24,16 +25,26 @@ var childServerMenu5 = []string{
 }
 
 var childServerMenu6 = []string{
-	"一次请求最多请求三张图片",
 	"1 随机涩图 （请求格式为'@Bot随机涩图'）",
 	"2 Tag涩图 （请求格式为'@BotTag涩图-图片数量-tag'，tag之间用逗号间隔，例如'@Bot随机涩图-2-碧蓝档案，足控'-----因为服务器响应问题以及保证图片响应速度目前无论选择数目为多少默认为1）",
 	//"3 图片识别 （请求格式为'@'）"
 }
-var childServerMenu7 = []string{
-	"一次请求最多请求三张图片",
-	"1 随机涩图 （请求格式为'@Bot随机涩图'）",
-	"2 Tag涩图 （请求格式为'@BotTag涩图-图片数量-tag'，tag之间用逗号间隔，例如'@Bot随机涩图-2-碧蓝档案，足控'-----因为服务器响应问题以及保证图片响应速度目前无论选择数目为多少默认为1）",
-	//"3 图片识别 （请求格式为'@'）"
+
+//var childServerMenu7 = []string{
+//	"一次请求最多请求三张图片",
+//	"1 随机涩图 （请求格式为'@Bot随机涩图'）",
+//	"2 Tag涩图 （请求格式为'@BotTag涩图-图片数量-tag'，tag之间用逗号间隔，例如'@Bot随机涩图-2-碧蓝档案，足控'-----因为服务器响应问题以及保证图片响应速度目前无论选择数目为多少默认为1）",
+//	//"3 图片识别 （请求格式为'@'）"
+//}
+
+var childServerMenu8 = []string{
+	"1 每日签到（第一天100exp，连续签到可额外获得50exp，连续七天达到最大值获得500经验）",
+	"2 查询升级需要EXP数值（@bot等级查询-初始等级-预期等级，满级100级）",
+	"3 获取宠物信息（@Bot获取宠物信息）",
+	"4 注册（注册格式为：@Bot用户注册-宠物ID）",
+	"5 BOSS战",
+	"6 道具箱",
+	"7 获取可注册宠物列表（@Bot获取可注册宠物列表）",
 }
 
 func GetServerList() []string {
@@ -46,4 +57,8 @@ func GetChildServerList5() []string {
 
 func GetChildServerList6() []string {
 	return childServerMenu6
+}
+
+func GetChildServerList8() []string {
+	return childServerMenu8
 }
