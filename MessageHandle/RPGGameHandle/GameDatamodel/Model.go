@@ -26,7 +26,7 @@ type UserInfo struct {
 	Item          string            `gorm:"column:Item;type:varchar(255);default:''"`      // 数据库列名为 item_info
 	PetInfo       []PersonalPetInfo `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"` // 外键字段，删除时级联
 	SignInDayCout int               `gorm:"type:int;not null;column:SignInDayCout"`        //签到天数
-	SignInTime    time.Time         `gorm:"type:datetime;column:SignInTime"`               // 新增签到时间字段
+	SignInTime    time.Time         `gorm:"type:datetime;column:SignInTime;not null"`      // 新增签到时间字段
 }
 
 //type UserItemList struct {
