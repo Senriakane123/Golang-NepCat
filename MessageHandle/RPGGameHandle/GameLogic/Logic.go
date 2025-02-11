@@ -7,10 +7,13 @@ import (
 	"NepcatGoApiReq/MessageHandle/Tool"
 	"NepcatGoApiReq/MessageModel"
 	"NepcatGoApiReq/ReqApiConst"
+	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"sort"
 	"strings"
+	"time"
 )
 
 type GameManageHandle struct {
@@ -84,10 +87,12 @@ func userRegister(message MessageModel.Message) {
 
 	// 创建新用户
 	newUser := GameDatamodel.UserInfo{
-		QQNum:   qqNum,
-		Name:    message.Sender.NickName,
-		Item:    "",
-		PetInfo: []GameDatamodel.PersonalPetInfo{},
+		QQNum:         qqNum,
+		Name:          message.Sender.NickName,
+		Item:          "{1,1}",
+		PetInfo:       []GameDatamodel.PersonalPetInfo{},
+		SignInDayCout: 2,
+		SignInTime:    time.Now(), // 赋值当前时间
 	}
 
 	// 插入用户数据
@@ -102,13 +107,18 @@ func userRegister(message MessageModel.Message) {
 		PetId:    Tool.StringToInt64(PetID),
 		Petlevel: 1, // 初始等级
 		Exp:      0, // 初始经验
-		QQNum:    int(newUser.QQNum),
+
+		QQNum: int(newUser.QQNum),
+		Skill: "",
 	}
 
 	// 插入用户宠物数据
 	if err = DBControlApi.Db.Create(&newPetInfo, "personalpetinfo"); err != nil {
 		log.Println("绑定宠物失败:", err)
 		return
+	}
+	if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+		handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+"用户注册成功"))
 	}
 
 	fmt.Println("用户注册成功，ID:", newUser.ID, "绑定宠物 ID:", PetID)
@@ -148,5 +158,104 @@ func levelQuery(message MessageModel.Message) {
 }
 
 func dailySignIn(message MessageModel.Message) {
+	var Userlist GameDatamodel.UserInfo
+	// 提取用户 QQ 号
+	qqNum := message.Sender.UserID
+
+	var RespMessage []string
+	var ExpItemCode int
+	var ExpCardNum int
+
+	itemmap := GameDatamodel.ReturnUserItemList() //item为map[int]int
+
+	// 检查用户是否已注册
+	//var existingUser []GameDatamodel.UserInfo
+	_, err := DBControlApi.Db.Where("userinfo", &Userlist, "QQNum = ?", qqNum)
+	if err != nil {
+		return
+	} else {
+		// **获取当前时间**
+		now := time.Now()
+		lastSignIn := Userlist.SignInTime
+		fmt.Println(lastSignIn.Year(), now.Year(), lastSignIn.YearDay(), now.YearDay())
+		if lastSignIn.YearDay() == now.YearDay() {
+			return
+		}
+		// **按天判断是否中断**
+		if lastSignIn.Year() != now.Year() || lastSignIn.YearDay() != now.YearDay()-1 {
+			Userlist.SignInDayCout = 1 // **断签，重置签到天数**
+		} else {
+			Userlist.SignInDayCout++ // **连续签到，+1**
+			Userlist.SignInTime = time.Now()
+		}
+		if Userlist.Item != "" {
+			err = json.Unmarshal([]byte(Userlist.Item), &itemmap)
+			if err != nil {
+				return
+			}
+		}
+		switch Userlist.SignInDayCout {
+		case 0:
+			ExpItemCode = 7
+			ExpCardNum = 500
+		case 1:
+			ExpItemCode = 1
+			ExpCardNum = 100
+		case 2:
+			ExpItemCode = 2
+			ExpCardNum = 150
+		case 3:
+			ExpItemCode = 3
+			ExpCardNum = 200
+		case 4:
+			ExpItemCode = 4
+			ExpCardNum = 250
+		case 5:
+			ExpItemCode = 5
+			ExpCardNum = 300
+		case 6:
+			ExpItemCode = 6
+			ExpCardNum = 350
+		}
+
+		// **通过 map 快速查找并更新**
+		if idx, exists := itemmap[ExpItemCode]; exists {
+			itemmap[idx]++
+		} else {
+			itemmap[ExpItemCode] = 1
+		}
+
+		// **转换回 JSON 并存入数据库**
+		newItemData, _ := json.Marshal(itemmap)
+		Userlist.Item = string(newItemData)
+
+		// **更新数据库**
+		if err = DBControlApi.Db.Update(&Userlist, "userinfo"); err != nil {
+			log.Println("更新用户物品失败:", err)
+		}
+
+		RespMessage = append(RespMessage, "签到成功！")
+		RespMessage = append(RespMessage, fmt.Sprintf("获得%d经验卡", ExpCardNum))
+
+		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+Tool.BuildReplyMessage(RespMessage)))
+		}
+	}
+
+}
+
+// 计算等级
+func LevelCalculate(NowLevel int, exp int, increExp int) (bool, int) {
+	baseExp := 100      // 初始基础经验值（1级升2级需要100经验）
+	growthFactor := 1.2 // 经验增长系数
+
+	// 计算公式：基础经验 × (增长系数)^当前等级
+	requiredExp := float64(baseExp) * math.Pow(growthFactor, float64(NowLevel))
+	IntrequiredExp := int(requiredExp)
+	if (exp + increExp) >= IntrequiredExp {
+		return true, (exp + increExp) - IntrequiredExp
+	} else {
+		return false, exp + increExp
+	}
 
 }

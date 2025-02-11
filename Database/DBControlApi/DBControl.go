@@ -35,7 +35,7 @@ func (bcontrol *DBcontrol) Create(model interface{}, tablename string) error {
 }
 
 // Update 更新记录
-func (bcontrol *DBcontrol) Update(updates map[string]interface{}, tablename string) error {
+func (bcontrol *DBcontrol) Update(updates interface{}, tablename string) error {
 	if result := bcontrol.DB.Table(tablename).Updates(updates); result.Error != nil {
 		return result.Error
 	}

@@ -233,6 +233,7 @@ func ImageToBase64(filePath string) (string, error) {
 	return base64Prefix + base64Str, nil
 }
 
+// 修改图片md5
 func ChangePicMD(filepath string) error {
 	file, err := os.OpenFile(filepath, os.O_APPEND|os.O_WRONLY, 0644)
 	defer file.Close()
@@ -241,6 +242,7 @@ func ChangePicMD(filepath string) error {
 	return err
 }
 
+// 识别游戏用户注册
 func ExtractPetIdNumber(text string) (string, error) {
 	// 编译正则表达式，匹配 "用户注册-" 后面的数字（包括负数）
 	re := regexp.MustCompile(`用户注册-?(\d+)`)
