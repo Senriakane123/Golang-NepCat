@@ -2,6 +2,7 @@ package MessageHandle
 
 import (
 	"NepcatGoApiReq/HTTPReq"
+	"NepcatGoApiReq/MessageHandle/DeepSeekReqHandle"
 	"NepcatGoApiReq/MessageHandle/GroupMessageHandle"
 	"NepcatGoApiReq/MessageHandle/R18PicManage"
 	"NepcatGoApiReq/MessageHandle/RPGGameHandle/GameLogic"
@@ -21,6 +22,12 @@ func MessageHandle(message MessageModel.Message) {
 		//解析是否需要服务
 		ServerMach := Tool.ParseServiceCommand(message.RawMessage)
 		if len(ServerMach) == 0 {
+
+			var DSHandle DeepSeekReqHandle.DeepSeekManageHandle
+			DSHandle.HandlerInit()
+			if DSHandle.HandleGroupManageMessage(message) {
+				return
+			}
 
 			//游戏功能包
 			var GameMessageApi GameLogic.GameManageHandle
@@ -76,7 +83,10 @@ func MessageHandle(message MessageModel.Message) {
 					if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
 						handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+Tool.BuildReplyMessage(MessageModel.GetChildServerList8())))
 					}
-
+				case "9":
+					if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+						handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+Tool.BuildReplyMessage(MessageModel.GetChildServerList8())))
+					}
 				}
 
 			}

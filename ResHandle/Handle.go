@@ -3,10 +3,15 @@ package ResHandle
 import (
 	"NepcatGoApiReq/MessageHandle"
 	"NepcatGoApiReq/MessageModel"
+	"NepcatGoApiReq/Websocket"
 	"encoding/json"
 	"fmt"
-	"regexp"
 )
+
+func InitDeepSeekHandler() {
+	// 这里注册回调，避免循环导入
+	Websocket.MessageHandlerFunc = HandleMessage
+}
 
 // 解析 JSON 并处理
 func HandleMessage(jsonData string) {
@@ -50,19 +55,4 @@ func handleChatMessage(msg MessageModel.Message) {
 	//	fmt.Printf("群聊消息，群ID: %d\n", msg.GroupID)
 	//	// 可进一步处理 at 消息、图片等
 	//}
-}
-
-func AtQQNumber(str string) (bool, []string) {
-	// 正则表达式匹配 [CQ:at,qq=3666859102] 里的 QQ 号
-	re := regexp.MustCompile(`\[CQ:at,qq=(\d+)\]`)
-
-	// 查找匹配的 QQ 号
-	match := re.FindStringSubmatch(str)
-	if len(match) > 1 {
-		fmt.Println("提取的 QQ 号:", match[1])
-		return true, match
-	} else {
-		fmt.Println("未找到匹配的 QQ 号")
-		return false, nil
-	}
 }

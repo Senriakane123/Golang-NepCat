@@ -256,3 +256,20 @@ func ExtractPetIdNumber(text string) (string, error) {
 	// 返回匹配的数字
 	return matches[1], nil
 }
+
+func ExtractDeepseekResMessage(RobQQNum int64, input string) (string, bool) {
+	// 将 RobQQNum 转换为字符串
+	RobQQNumStr := strconv.FormatInt(RobQQNum, 10)
+
+	// 动态生成正则表达式，确保 QQ 号匹配传入的 RobQQNum
+	re := regexp.MustCompile(`^\[CQ:at,qq=` + RobQQNumStr + `\] (.+)$`)
+
+	// 查找匹配项
+	match := re.FindStringSubmatch(input)
+
+	if len(match) > 1 {
+		return match[1], true // 返回提取到的消息和成功标志
+	}
+
+	return "", false // 如果没有匹配到，返回空字符串和失败标志
+}

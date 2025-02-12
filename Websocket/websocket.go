@@ -1,40 +1,67 @@
 package Websocket
 
 import (
-	"NepcatGoApiReq/ResHandle"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/url"
 	"os"
 	"os/signal"
+	"sync"
 )
 
+// WebSocket 连接实例（用于管理多个 WebSocket 连接）
+var conn *websocket.Conn
+var deepseekConn *websocket.Conn
+var mu sync.Mutex // 互斥锁，避免并发问题
+
 // 消息处理通道
-var messageChannel = make(chan string, 100) // 设定缓存大小，避免阻塞
+var messageChannel = make(chan string, 100)
+var DeepseekmessageChannel = make(chan string, 100)
 
+// 关闭当前 WebSocket 连接
+func CloseWebSocket() {
+	mu.Lock()
+	defer mu.Unlock()
+	if conn != nil {
+		_ = conn.Close()
+		fmt.Println("🔴 WebSocket 连接已关闭")
+		conn = nil
+	}
+}
+
+// 关闭 DeepSeek WebSocket 连接
+func CloseDeepSeekWebSocket() {
+	mu.Lock()
+	defer mu.Unlock()
+	if deepseekConn != nil {
+		_ = deepseekConn.Close()
+		fmt.Println("🔴 DeepSeek WebSocket 连接已关闭")
+		deepseekConn = nil
+	}
+}
+
+// 初始化 WebSocket（默认连接）
 func WebSocketInit() {
+
 	serverURL := url.URL{
-		Scheme:   "ws",             // WebSocket 协议
-		Host:     "127.0.0.1:3001", // 服务器地址和端口
-		Path:     "/",              // WebSocket 连接路径
-		RawQuery: "access_token=",  // 这里可以填入你的 Token
+		Scheme:   "ws",
+		Host:     "127.0.0.1:3001",
+		Path:     "/",
+		RawQuery: "access_token=",
 	}
 
-	// 建立 WebSocket 连接
-	conn, _, err := websocket.DefaultDialer.Dial(serverURL.String(), nil)
+	var err error
+	conn, _, err = websocket.DefaultDialer.Dial(serverURL.String(), nil)
 	if err != nil {
-		log.Fatalf("连接 WebSocket 失败: %v", err)
+		log.Fatalf("❌ 连接 WebSocket 失败: %v", err)
 	}
-	defer conn.Close()
-
 	fmt.Println("✅ 成功连接到 WebSocket 服务器")
 
 	// 捕获 Ctrl+C 退出
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	// 监听 WebSocket 消息
 	go func() {
 		for {
 			_, message, err := conn.ReadMessage()
@@ -42,80 +69,71 @@ func WebSocketInit() {
 				log.Println("❌ 读取消息失败:", err)
 				return
 			}
-			messages := string(message)
-			fmt.Println(messages)
 			fmt.Println("📩 收到消息:", string(message))
-			// 发送到 channel 进行异步处理
 			messageChannel <- string(message)
 		}
 	}()
-
-	// 发送 WebSocket 消息
-	err = conn.WriteMessage(websocket.TextMessage, []byte(`{"action":"get_login_info"}`))
-	if err != nil {
-		log.Println("❌ 发送消息失败:", err)
-		return
-	}
-	fmt.Println("📤 已发送请求: 获取机器人登录信息")
 
 	// 等待 Ctrl+C 退出
 	<-interrupt
 	fmt.Println("⏳ 关闭 WebSocket 连接...")
 }
 
+// 初始化 DeepSeek WebSocket
 func WebSocketInitForDeepSeek() {
+
 	serverURL := url.URL{
-		Scheme:   "ws",             // WebSocket 协议
-		Host:     "127.0.0.1:3002", // 服务器地址和端口
-		Path:     "/",              // WebSocket 连接路径
-		RawQuery: "access_token=",  // 这里可以填入你的 Token
+		Scheme:   "ws",
+		Host:     "127.0.0.1:3002",
+		Path:     "/",
+		RawQuery: "access_token=",
 	}
 
-	// 建立 WebSocket 连接
-	conn, _, err := websocket.DefaultDialer.Dial(serverURL.String(), nil)
+	var err error
+	deepseekConn, _, err = websocket.DefaultDialer.Dial(serverURL.String(), nil)
 	if err != nil {
-		log.Fatalf("连接 WebSocket 失败: %v", err)
+		log.Fatalf("❌ 连接 DeepSeek WebSocket 失败: %v", err)
 	}
-	defer conn.Close()
-
-	fmt.Println("✅ 成功连接到 WebSocket 服务器")
+	fmt.Println("✅ 成功连接到 DeepSeek WebSocket 服务器")
 
 	// 捕获 Ctrl+C 退出
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 
-	// 监听 WebSocket 消息
 	go func() {
+		//var nowConnGroup string
 		for {
-			_, message, err := conn.ReadMessage()
+			_, message, err := deepseekConn.ReadMessage()
 			if err != nil {
-				log.Println("❌ 读取消息失败:", err)
+				log.Println("❌ 读取 DeepSeek 消息失败:", err)
 				return
 			}
-			messages := string(message)
-			fmt.Println(messages)
-			fmt.Println("📩 收到消息:", string(message))
-			// 发送到 channel 进行异步处理
-			messageChannel <- string(message)
+			fmt.Println("📩 收到 DeepSeek 消息:", string(message))
+			DeepseekmessageChannel <- string(message)
 		}
 	}()
-
-	// 发送 WebSocket 消息
-	err = conn.WriteMessage(websocket.TextMessage, []byte(`{"action":"get_login_info"}`))
-	if err != nil {
-		log.Println("❌ 发送消息失败:", err)
-		return
-	}
-	fmt.Println("📤 已发送请求: 获取机器人登录信息")
 
 	// 等待 Ctrl+C 退出
 	<-interrupt
 	fmt.Println("⏳ 关闭 WebSocket 连接...")
 }
 
-// 处理消息的 goroutine
+var MessageHandlerFunc func(string) // 定义回调函数
+// 处理普通 WebSocket 消息
 func MessageHandler() {
-	for msg := range messageChannel { // 持续监听 channel
-		ResHandle.HandleMessage(msg) // 处理消息
+	for msg := range messageChannel {
+		if MessageHandlerFunc != nil {
+			MessageHandlerFunc(msg) // 触发回调，而不是直接调用 HandleDeepseekMessage
+		}
+	}
+}
+
+var DeepSeekMessageHandlerFunc func(string) // 定义回调函数
+
+func DeepSeekMessageHandler() {
+	for msg := range DeepseekmessageChannel {
+		if DeepSeekMessageHandlerFunc != nil {
+			DeepSeekMessageHandlerFunc(msg) // 触发回调，而不是直接调用 HandleDeepseekMessage
+		}
 	}
 }

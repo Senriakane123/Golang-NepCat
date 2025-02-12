@@ -12,6 +12,7 @@ var serverMenu = []string{
 	"6 随机涩图 ",
 	"7 更换机器人头像（需要向机器人所有者获取管理权限，目前是测试开发阶段） ",
 	"8 宠物系统（测试开发阶段）",
+	"8 DeepSeek（'@Bot接入deepseek'后进入ai聊天模式，再次'@Bot退出deepseek'则会退出AI聊天模式）",
 }
 
 var childServerMenu5 = []string{
