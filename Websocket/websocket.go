@@ -10,14 +10,27 @@ import (
 	"sync"
 )
 
+// 消息处理通道
+var MessageChannel = make(chan string, 100)
+var DeepseekmessageChannel = make(chan string, 100)
+
+//type WSMgrHandle struct {
+//	conn *websocket.Conn
+//	//MessageChannel  make(chan string, 100)
+//}
+//
+//type DSWSMgrHandle struct {
+//	deepseekConn *websocket.Conn
+//	mu           sync.Mutex // 互斥锁，避免并发问题
+//}
+//
+//var WSHandle WSMgrHandle
+//var DSWSHandle DSWSMgrHandle
+
 // WebSocket 连接实例（用于管理多个 WebSocket 连接）
 var conn *websocket.Conn
 var deepseekConn *websocket.Conn
 var mu sync.Mutex // 互斥锁，避免并发问题
-
-// 消息处理通道
-var messageChannel = make(chan string, 100)
-var DeepseekmessageChannel = make(chan string, 100)
 
 // 关闭当前 WebSocket 连接
 func CloseWebSocket() {
@@ -70,7 +83,8 @@ func WebSocketInit() {
 				return
 			}
 			fmt.Println("📩 收到消息:", string(message))
-			messageChannel <- string(message)
+			MessageChannel <- string(message)
+			//go MessageHandler()
 		}
 	}()
 
@@ -110,6 +124,7 @@ func WebSocketInitForDeepSeek() {
 			}
 			fmt.Println("📩 收到 DeepSeek 消息:", string(message))
 			DeepseekmessageChannel <- string(message)
+			//go DeepSeekMessageHandler()
 		}
 	}()
 
@@ -121,11 +136,13 @@ func WebSocketInitForDeepSeek() {
 var MessageHandlerFunc func(string) // 定义回调函数
 // 处理普通 WebSocket 消息
 func MessageHandler() {
-	for msg := range messageChannel {
+	for msg := range MessageChannel {
 		if MessageHandlerFunc != nil {
 			MessageHandlerFunc(msg) // 触发回调，而不是直接调用 HandleDeepseekMessage
 		}
+		//return
 	}
+
 }
 
 var DeepSeekMessageHandlerFunc func(string) // 定义回调函数

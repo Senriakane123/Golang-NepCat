@@ -27,6 +27,12 @@ type ReqParam struct {
 	Proxy   string   `json:"proxy,omitempty"`
 }
 
+var Params = ReqParam{
+	Num:  1,
+	R18:  0,
+	Tags: []string{},
+}
+
 type PicManage struct {
 	folderPath string
 	maxImages  int
@@ -53,8 +59,10 @@ func (n *PicManage) HandlerInit() {
 	n.folderPath = "PhotoGallery" // 默认路径
 
 	var picManagekeywordHandlers = map[string]func(MessageModel.Message){
-		"随机涩图":  n.RandomPic,
-		"Tag涩图": n.RandomPicByTagOrNum,
+		"随机涩图":    n.RandomPic,
+		"Tag涩图":   n.RandomPicByTagOrNum,
+		"开启R18模式": n.R18Enable,
+		//"关闭R18模式":
 		//"随机R18涩图"
 	}
 	n.handler = picManagekeywordHandlers
@@ -230,15 +238,13 @@ func (n *PicManage) cleanFolderIfNeeded() error {
 
 // 随机涩图
 func (n *PicManage) RandomPic(message MessageModel.Message) {
-	var Params ReqParam
+	var Param ReqParam
 	//var path string
 	//var Paths []string
 	var ImageBase64Str string
 	var ImageBase64Strs []string
-	Params.R18 = 0
-	Params.Tags = nil
-	Params.Num = 1
-	PicInfo, err := n.fetchImageURL(&Params)
+	Param = Params
+	PicInfo, err := n.fetchImageURL(&Param)
 	if err != nil {
 		return
 	}
@@ -266,12 +272,11 @@ func (n *PicManage) RandomPicByTagOrNum(message MessageModel.Message) {
 		fmt.Println(err)
 		return
 	}
-	var Params ReqParam
+	var Param ReqParam
 	var ImageBase64Str string
 	var ImageBase64Strs []string
-	Params.R18 = 0
-	Params.Tags = Tags
-	Params.Num = 1
+	Param = Params
+	Param.Tags = Tags
 
 	PicInfo, err := n.fetchImageURL(&Params)
 	if err != nil {
@@ -286,6 +291,10 @@ func (n *PicManage) RandomPicByTagOrNum(message MessageModel.Message) {
 	if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
 		handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.SendRandomPic(ImageBase64Strs, message.GroupID, PicInfo))
 	}
+}
+
+func (n *PicManage) R18Enable(message MessageModel.Message) {
+	Params.R18 = 1
 }
 
 func (n *PicManage) PicReqRawMessageConfig(message MessageModel.Message) {

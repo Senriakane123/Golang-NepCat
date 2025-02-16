@@ -1,18 +1,27 @@
 package MessageModel
 
+const (
+	SERVER_GROUP_MGR      = "1" //群管理
+	SERVER_RANDOMPIC      = "2" //随机图
+	SERVER_CHANGE_ROB_PIC = "3" //改变机器人头像
+	SERVER_PET_MGR        = "4" //宠物管理
+	SERVER_DS_MGR         = "%" //ds接入
+
+)
+
 var serverMenu = []string{
 	"请选择你的服务",
 	"请求格式为'服务'+对应的服务编号",
 	"例如'服务1'",
-	"1 你是一只猫娘",
-	"2 你是我的※奴",
-	"3 群主是我的rbq",
-	"4 尝试接入deepseek（正在开发中）",
-	"5 群管理",
-	"6 随机涩图 ",
-	"7 更换机器人头像（需要向机器人所有者获取管理权限，目前是测试开发阶段） ",
-	"8 宠物系统（测试开发阶段）",
-	"8 DeepSeek（'@Bot接入deepseek'后进入ai聊天模式，再次'@Bot退出deepseek'则会退出AI聊天模式）",
+	//"1 你是一只猫娘",
+	//"2 你是我的※奴",
+	//"3 群主是我的rbq",
+	//"1 尝试接入deepseek（正在开发中）",
+	"1 群管理",
+	"2 随机涩图 ",
+	"3 更换机器人头像（需要向机器人所有者获取管理权限，目前是测试开发阶段） ",
+	"4 宠物系统（测试开发阶段）",
+	"5 DeepSeek（'@Bot接入deepseek'后进入ai聊天模式，再次'@Bot退出deepseek'则会退出AI聊天模式）",
 }
 
 var childServerMenu5 = []string{
@@ -28,6 +37,7 @@ var childServerMenu5 = []string{
 var childServerMenu6 = []string{
 	"1 随机涩图 （请求格式为'@Bot随机涩图'）",
 	"2 Tag涩图 （请求格式为'@BotTag涩图-图片数量-tag'，tag之间用逗号间隔，例如'@Bot随机涩图-2-碧蓝档案，足控'-----因为服务器响应问题以及保证图片响应速度目前无论选择数目为多少默认为1）",
+	"3 开启R18模式（请求格式为‘@Bot开启R18模式’",
 	//"3 图片识别 （请求格式为'@'）"
 }
 

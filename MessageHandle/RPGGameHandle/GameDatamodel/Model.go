@@ -66,3 +66,10 @@ type AllSkillList struct {
 	Des       string `gorm:"type:varchar(255);column:Des"`                // 表中字段名为 des
 	PetID     []int  `gorm:"type:int;not null;column:PetID"`              // 表中字段名为 pet_id
 }
+
+type BossMsgModel struct {
+	ID   int    `gorm:"primaryKey;autoIncrement;column:ID"`
+	Name string `gorm:"type:varchar(100);not null;column:Name"`
+	Atk  int    `gorm:"type:int;not null;column:Atk"`
+	Def  int    `gorm:"type:int;not null;column:Def"`
+}

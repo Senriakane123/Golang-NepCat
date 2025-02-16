@@ -63,27 +63,23 @@ func MessageHandle(message MessageModel.Message) {
 			//判断初级服务菜单
 			if ServerMach[2] == "" {
 				switch ServerMach[1] {
-				case "1":
-				case "2":
-				case "3":
-				case "4":
-				case "5":
+				case MessageModel.SERVER_GROUP_MGR:
 					if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
 						handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+Tool.BuildReplyMessage(MessageModel.GetChildServerList5())))
 					}
-				case "6":
+				case MessageModel.SERVER_RANDOMPIC:
 					if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
 						handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+Tool.BuildReplyMessage(MessageModel.GetChildServerList6())))
 					}
-				case "7":
+				case MessageModel.SERVER_CHANGE_ROB_PIC:
 					if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
 						handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+Tool.BuildReplyMessage(MessageModel.GetChildServerList6())))
 					}
-				case "8":
+				case MessageModel.SERVER_PET_MGR:
 					if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
 						handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+Tool.BuildReplyMessage(MessageModel.GetChildServerList8())))
 					}
-				case "9":
+				case MessageModel.SERVER_DS_MGR:
 					if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
 						handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+Tool.BuildReplyMessage(MessageModel.GetChildServerList8())))
 					}
