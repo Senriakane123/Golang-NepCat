@@ -7,6 +7,19 @@ type DBcontrol struct {
 	DB *gorm.DB
 }
 
+func (bcontrol *DBcontrol) WhereBysql(query string, model interface{}, args ...interface{}) (interface{}, error) {
+	// 使用 GORM 的 Where 方法执行查询
+	result := bcontrol.DB.Where(query, args...).Find(model)
+
+	// 如果查询失败，返回错误
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	// 返回查询到的结果
+	return result, nil
+}
+
 func (bcontrol *DBcontrol) Where(tablename string, model interface{}, query interface{}, args ...interface{}) (interface{}, error) {
 	// 使用 GORM 的 Where 方法执行查询
 	result := bcontrol.DB.Table(tablename).Where(query, args...).Find(model)

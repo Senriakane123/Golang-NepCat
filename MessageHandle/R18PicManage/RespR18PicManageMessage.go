@@ -246,18 +246,24 @@ func (n *PicManage) RandomPic(message MessageModel.Message) {
 	Param = Params
 	PicInfo, err := n.fetchImageURL(&Param)
 	if err != nil {
+		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]"+"获取涩图url失败"))
+		}
 		return
 	}
 	for _, s := range *PicInfo {
 		err, ImageBase64Str = n.downloadImage(s.URLs.Original, s.PID)
+		if err != nil {
+			if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+				handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]"+"下载图片失败"))
+			}
+			fmt.Println(err)
+			return
+		}
 		//Paths = append(Paths, path)
 		ImageBase64Strs = append(ImageBase64Strs, ImageBase64Str)
 	}
 
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
 	if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
 		handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.SendRandomPic(ImageBase64Strs, message.GroupID, PicInfo))
 	}
@@ -278,14 +284,23 @@ func (n *PicManage) RandomPicByTagOrNum(message MessageModel.Message) {
 	Param = Params
 	Param.Tags = Tags
 
-	PicInfo, err := n.fetchImageURL(&Params)
+	PicInfo, err := n.fetchImageURL(&Param)
 	if err != nil {
+		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]"+"获取涩图url失败"))
+		}
 		fmt.Println(err)
 		return
 	}
 	for _, s := range *PicInfo {
 		err, ImageBase64Str = n.downloadImage(s.URLs.Original, s.PID)
-		//Paths = append(Paths, path)
+		if err != nil {
+			if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+				handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]"+"下载图片失败"))
+			}
+			fmt.Println(err)
+			return
+		}
 		ImageBase64Strs = append(ImageBase64Strs, ImageBase64Str)
 	}
 	if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {

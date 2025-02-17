@@ -7,8 +7,8 @@ import (
 )
 
 func LoginInDeepSeek(message MessageModel.Message) {
+	
 	go Websocket.DeepSeekMessageHandler()
-
 	Websocket.CloseWebSocket() // 关闭默认 WebSocket
 	//CloseDeepSeekWebSocket() // 关闭之前的 DeepSeek 连接
 	Websocket.WebSocketInitForDeepSeek() // 先关闭普通 WebSocket，再连接 DeepSeek

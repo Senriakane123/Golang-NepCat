@@ -46,7 +46,7 @@ type PersonalPetInfo struct {
 	ID       int    `gorm:"primaryKey;autoIncrement;column:ID"` // 表中字段名为 id
 	UserID   int64  `gorm:"index;not null;column:UserID"`       // 表中字段名为 user_id
 	PetId    int64  `gorm:"not null;column:PetId"`              // 表中字段名为 pet_id
-	Petlevel int    `gorm:"type:int;not null;column:Petlevel"`  // 表中字段名为 pet_level
+	Petlevel int    `gorm:"type:int;not null;column:PetLevel"`  // 表中字段名为 pet_level
 	Exp      int    `gorm:"type:int;not null;column:Exp"`       // 表中字段名为 exp
 	QQNum    int    `gorm:"type:int;not null;column:QQNum"`     // 表中字段名为 exp
 	Skill    string `gorm:"column:Skill;type:varchar(255);default:''"`
@@ -64,7 +64,7 @@ type AllSkillList struct {
 	ID        int    `gorm:"primaryKey;autoIncrement;column:ID"`          // 表中字段名为 id
 	SkillName string `gorm:"type:varchar(100);not null;column:SkillName"` // 表中字段名为 skill_name
 	Des       string `gorm:"type:varchar(255);column:Des"`                // 表中字段名为 des
-	PetID     []int  `gorm:"type:int;not null;column:PetID"`              // 表中字段名为 pet_id
+	PetID     string `gorm:"type:varchar(255);not null;column:PetID"`     // 表中字段名为 pet_id
 }
 
 type BossMsgModel struct {

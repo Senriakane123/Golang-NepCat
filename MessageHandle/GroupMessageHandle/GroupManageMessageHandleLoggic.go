@@ -13,21 +13,13 @@ type GroupManageHandle struct {
 	Handler map[string]func(message MessageModel.Message)
 }
 
-//// 关键词映射到处理函数
-//var groupManagekeywordHandlers = map[string]func(MessageModel.Message){
-//	"禁言":     handleBan,
-//	"解除全体禁言": handleUnbanGroup,
-//	"全体禁言":   handleGroupBan,
-//	"踢人":     KickSomeBody,
-//}
-
 func (n *GroupManageHandle) HandlerInit() {
 	// 关键词映射到处理函数
 	var groupManagekeywordHandlers = map[string]func(MessageModel.Message){
-		"禁言":     handleBan,
-		"解除全体禁言": handleUnbanGroup,
-		"全体禁言":   handleGroupBan,
-		"踢人":     KickSomeBody,
+		"禁言":     n.handleBan,
+		"解除全体禁言": n.handleUnbanGroup,
+		"全体禁言":   n.handleGroupBan,
+		"踢人":     n.KickSomeBody,
 	}
 	n.Handler = groupManagekeywordHandlers
 }
@@ -59,7 +51,7 @@ func (n *GroupManageHandle) HandleGroupManageMessage(message MessageModel.Messag
 }
 
 // 处理全体禁言
-func handleGroupBan(message MessageModel.Message) {
+func (n *GroupManageHandle) handleGroupBan(message MessageModel.Message) {
 	if message.Sender.Role == "owner" || message.Sender.Role == "admin" {
 		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SET_GROUP_WHOLE_BAN]; exists {
 			handler(ReqApiConst.SET_GROUP_WHOLE_BAN, MessageModel.GroupBanRespMessage(message.GroupID, true))
@@ -74,7 +66,7 @@ func handleGroupBan(message MessageModel.Message) {
 }
 
 // 处理解除全体禁言
-func handleUnbanGroup(message MessageModel.Message) {
+func (n *GroupManageHandle) handleUnbanGroup(message MessageModel.Message) {
 	if message.Sender.Role == "owner" || message.Sender.Role == "admin" {
 		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SET_GROUP_WHOLE_BAN]; exists {
 			handler(ReqApiConst.SET_GROUP_WHOLE_BAN, MessageModel.GroupBanRespMessage(message.GroupID, false))
@@ -88,7 +80,7 @@ func handleUnbanGroup(message MessageModel.Message) {
 
 }
 
-func KickSomeBody(message MessageModel.Message) {
+func (n *GroupManageHandle) KickSomeBody(message MessageModel.Message) {
 	if message.Sender.Role == "owner" || message.Sender.Role == "admin" {
 		_, QQNumberList := Tool.AtQQNumber(message.RawMessage)
 		for _, v := range QQNumberList {
@@ -113,7 +105,7 @@ func KickSomeBody(message MessageModel.Message) {
 //
 
 // 处理单独禁言
-func handleBan(message MessageModel.Message) {
+func (n *GroupManageHandle) handleBan(message MessageModel.Message) {
 	_, QQNumberList := Tool.AtQQNumber(message.RawMessage)
 	BanReqFormatBoolen, _, Time := Tool.CheckBanFormat(message.RawMessage)
 	if (message.Sender.Role == "owner" || message.Sender.Role == "admin") && BanReqFormatBoolen {

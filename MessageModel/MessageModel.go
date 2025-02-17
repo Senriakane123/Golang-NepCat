@@ -1,6 +1,6 @@
 package MessageModel
 
-// 定义基础消息结构
+// 收到nepcat的消息结构
 type Message struct {
 	PostType      string  `json:"post_type"`
 	SelfID        int64   `json:"self_id"`
@@ -16,6 +16,7 @@ type Message struct {
 	SubType       string  `json:"sub_type,omitempty"` // 私聊才有 "friend"
 }
 
+// 消息发送者信息结构
 type SendDer struct {
 	UserID   int64  `json:"user_id"`
 	NickName string `json:"nickname"`
@@ -41,6 +42,7 @@ type PixivImage struct {
 	} `gorm:"embedded" json:"urls"` // 使用 embedded 方式存储
 }
 
+// api获取图片
 type APIResponse struct {
 	Error string       `json:"error"`
 	Data  []PixivImage `json:"data"`

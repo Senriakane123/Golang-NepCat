@@ -23,11 +23,11 @@ type GameManageHandle struct {
 func (n *GameManageHandle) HandlerInit() {
 	// 关键词映射到处理函数
 	var groupManagekeywordHandlers = map[string]func(MessageModel.Message){
-		"用户注册":     userRegister,
-		"获取宠物信息":   getPetInfo,
-		"获取注册宠物列表": getEnableRegisPetList,
-		"等级查询":     levelQuery,
-		"每日签到":     dailySignIn,
+		"用户注册":     n.userRegister,
+		"获取宠物信息":   n.getPetInfo,
+		"获取注册宠物列表": n.getEnableRegisPetList,
+		"等级查询":     n.levelQuery,
+		"每日签到":     n.dailySignIn,
 	}
 	n.Handler = groupManagekeywordHandlers
 }
@@ -58,7 +58,7 @@ func (n *GameManageHandle) HandleGameManageMessage(message MessageModel.Message)
 	return false
 }
 
-func userRegister(message MessageModel.Message) {
+func (n *GameManageHandle) userRegister(message MessageModel.Message) {
 	fmt.Println("收到用户注册消息:", message)
 
 	// 提取用户 QQ 号
@@ -67,6 +67,9 @@ func userRegister(message MessageModel.Message) {
 	// 提取宠物 ID
 	PetID, err := Tool.ExtractPetIdNumber(message.RawMessage)
 	if err != nil {
+		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+"用户注册成功，"+"用户请求格式错误"))
+		}
 		log.Println("提取宠物 ID 失败:", err)
 		return
 	}
@@ -75,6 +78,9 @@ func userRegister(message MessageModel.Message) {
 	var existingUser []GameDatamodel.UserInfo
 	_, err = DBControlApi.Db.Where("userinfo", &existingUser, "QQNum = ?", qqNum)
 	if err != nil {
+		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+"用户注册成功，"+"查询用户失败"))
+		}
 		log.Println("查询用户信息失败:", err)
 		return
 	}
@@ -97,10 +103,25 @@ func userRegister(message MessageModel.Message) {
 
 	// 插入用户数据
 	if err = DBControlApi.Db.Create(&newUser, "userinfo"); err != nil {
+		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+"用户注册成功，"+"创建用户失败"))
+		}
 		log.Println("创建用户失败:", err)
 		return
 	}
 
+	// 创建 SkillList
+	var SkillList []GameDatamodel.AllSkillList
+	SkillList = append(SkillList, GameDatamodel.AllSkillList{
+		ID: 1,
+	})
+
+	// 将 SkillList 转换为 JSON 字符串
+	SkillListJSON, err := json.Marshal(SkillList)
+	if err != nil {
+		fmt.Println("Error marshaling SkillList:", err)
+		return
+	}
 	// 绑定宠物
 	newPetInfo := GameDatamodel.PersonalPetInfo{
 		UserID:   int64(newUser.ID),
@@ -109,30 +130,126 @@ func userRegister(message MessageModel.Message) {
 		Exp:      0, // 初始经验
 
 		QQNum: int(newUser.QQNum),
-		Skill: "",
+		Skill: string(SkillListJSON),
 	}
 
 	// 插入用户宠物数据
 	if err = DBControlApi.Db.Create(&newPetInfo, "personalpetinfo"); err != nil {
+		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+"用户注册成功，"+"绑定宠物失败"))
+		}
 		log.Println("绑定宠物失败:", err)
 		return
 	}
 	if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-		handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+"用户注册成功"))
+		handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+"用户注册成功，"+fmt.Sprintf("绑定宠物 ID:%d", Tool.StringToInt64(PetID))))
 	}
 
 	fmt.Println("用户注册成功，ID:", newUser.ID, "绑定宠物 ID:", PetID)
 
 }
 
-func getPetInfo(message MessageModel.Message) {
+func (n *GameManageHandle) getPetInfo(message MessageModel.Message) {
+	var PerPetInfo []GameDatamodel.PersonalPetInfo
+	_, err := DBControlApi.Db.Where("personalpetinfo", &PerPetInfo, "QQNum = ?", message.Sender.UserID)
+	if err != nil {
+		log.Println("查询用户信息失败:", err)
+		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+"查询用户失败请联系管理员"))
+		}
+		return
+	}
 
+	if len(PerPetInfo) == 0 {
+		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+"用户暂无注册"))
+		}
+	}
+
+	///////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////
+	// 假设 PerPetInfo[0].Skill 是包含 JSON 字符串的字段
+	skillData := []byte(PerPetInfo[0].Skill)
+
+	// 定义 PetSkillList 用来存储解析后的数据
+	var PetSkillList []GameDatamodel.AllSkillList
+
+	// 使用 json.Unmarshal 解析字符串
+	err = json.Unmarshal(skillData, &PetSkillList)
+	if err != nil {
+		fmt.Println("Error unmarshalling Skill:", err)
+		return
+	}
+
+	// 提取 PetSkillList 中的所有 ID
+	var skillIDs []int
+	for _, skill := range PetSkillList {
+		skillIDs = append(skillIDs, skill.ID)
+	}
+
+	// 如果没有技能 ID，则不进行查询
+	if len(skillIDs) == 0 {
+		fmt.Println("No skills found for this pet.")
+		return
+	}
+
+	// 将 skillIDs 转换为字符串格式，适用于 IN 查询
+	// 假设数据库使用的是字符串格式的 ID (你可能需要调整根据数据库的类型)
+	var idStrings []string
+	for _, id := range skillIDs {
+		idStrings = append(idStrings, fmt.Sprintf("%d", id))
+	}
+	idsStr := strings.Join(idStrings, ",")
+
+	// 查询数据库，使用 IN 子句查询多个技能 ID
+	//query := fmt.Sprintf("SELECT * FROM allskilllist WHERE ID IN (%s) AND PetId = ?", idsStr)
+	PetSkillList = []GameDatamodel.AllSkillList{}
+	// 执行查询
+	_, err = DBControlApi.Db.Where("allskilllist", &PetSkillList, "ID = ?", idsStr)
+	if err != nil {
+		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+"查询技能失败"))
+		}
+		fmt.Println("Error querying database:", err)
+	} else {
+		fmt.Println("Query executed successfully.")
+	}
+
+	//PetSkillList = Info.([]GameDatamodel.AllSkillList)
+
+	var perpetskill []string
+	for _, skill := range PetSkillList {
+		perpetskill = append(perpetskill, skill.SkillName)
+	}
+
+	///////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////
+
+	var PetInfo []GameDatamodel.Pet
+	_, err = DBControlApi.Db.Where("pet", &PetInfo, "ID = ?", PerPetInfo[0].PetId)
+	if err != nil {
+		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+"查询宠物信息失败"))
+		}
+		log.Println("查询宠物信息失败:", err)
+		return
+	}
+
+	petStr := fmt.Sprintf("用户的宠物信息为：\n用户QQ:%d\n宠物ID:%d\n宠物名称:%s\n宠物等级:%d\n宠物经验:%d\n宠物技能:%s",
+		PerPetInfo[0].QQNum, PetInfo[0].ID, PetInfo[0].Name, PerPetInfo[0].Petlevel, PerPetInfo[0].Exp, strings.Join(perpetskill, ", "))
+
+	if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+		handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+petStr))
+	}
 }
-func getEnableRegisPetList(message MessageModel.Message) {
+func (n *GameManageHandle) getEnableRegisPetList(message MessageModel.Message) {
 	var EnableRegisPetList []GameDatamodel.Pet
 	var EnablePetInfoRegisRespMessage []string
 	_, err := DBControlApi.Db.Get(&EnableRegisPetList, "pet")
 	if err != nil {
+		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+"查询可注册宠物信息失败"))
+		}
 		return
 	} else {
 
@@ -153,11 +270,11 @@ func getEnableRegisPetList(message MessageModel.Message) {
 
 }
 
-func levelQuery(message MessageModel.Message) {
+func (n *GameManageHandle) levelQuery(message MessageModel.Message) {
 
 }
 
-func dailySignIn(message MessageModel.Message) {
+func (n *GameManageHandle) dailySignIn(message MessageModel.Message) {
 	var Userlist GameDatamodel.UserInfo
 	// 提取用户 QQ 号
 	qqNum := message.Sender.UserID
@@ -172,6 +289,9 @@ func dailySignIn(message MessageModel.Message) {
 	//var existingUser []GameDatamodel.UserInfo
 	_, err := DBControlApi.Db.Where("userinfo", &Userlist, "QQNum = ?", qqNum)
 	if err != nil {
+		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+"查询用户信息失败"))
+		}
 		return
 	} else {
 		// **获取当前时间**
@@ -179,6 +299,9 @@ func dailySignIn(message MessageModel.Message) {
 		lastSignIn := Userlist.SignInTime
 		fmt.Println(lastSignIn.Year(), now.Year(), lastSignIn.YearDay(), now.YearDay())
 		if lastSignIn.YearDay() == now.YearDay() {
+			if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+				handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+"用户今日已经签到"))
+			}
 			return
 		}
 		// **按天判断是否中断**
@@ -231,6 +354,9 @@ func dailySignIn(message MessageModel.Message) {
 
 		// **更新数据库**
 		if err = DBControlApi.Db.Update(&Userlist, "userinfo"); err != nil {
+			if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+				handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+"更新用户信息失败"))
+			}
 			log.Println("更新用户物品失败:", err)
 		}
 
@@ -245,7 +371,7 @@ func dailySignIn(message MessageModel.Message) {
 }
 
 // 计算等级
-func LevelCalculate(NowLevel int, exp int, increExp int) (bool, int) {
+func (n *GameManageHandle) LevelCalculate(NowLevel int, exp int, increExp int) (bool, int) {
 	baseExp := 100      // 初始基础经验值（1级升2级需要100经验）
 	growthFactor := 1.2 // 经验增长系数
 
@@ -257,5 +383,9 @@ func LevelCalculate(NowLevel int, exp int, increExp int) (bool, int) {
 	} else {
 		return false, exp + increExp
 	}
+
+}
+
+func (n *GameManageHandle) Fight(PetList []GameDatamodel.PersonalPetInfo) {
 
 }

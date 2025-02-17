@@ -11,7 +11,7 @@ var Db DBcontrol
 
 // 初始化数据库
 func InitDatabase() {
-	dsn := "root:cx030115@tcp(127.0.0.1:3306)/gamedata?charset=utf8mb4&parseTime=True&loc=Local"
+	dsn := "root:cx030115@tcp(127.0.0.1:3306)/nepcatdata?charset=utf8mb4&parseTime=True&loc=Local"
 	var err error
 	Db.DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {

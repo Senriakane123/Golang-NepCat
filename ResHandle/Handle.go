@@ -46,7 +46,7 @@ func handleChatMessage(msg MessageModel.Message) {
 	fmt.Printf("收到来自用户 %d 的消息: %s\n", msg.UserID, msg.RawMessage)
 	switch msg.MessageType {
 	case "group":
-		MessageHandle.MessageHandle(msg)
+		go MessageHandle.MessageHandle(msg)
 		fmt.Println("暂定调用http回复")
 	case "private":
 		fmt.Println("消息，暂无处理")

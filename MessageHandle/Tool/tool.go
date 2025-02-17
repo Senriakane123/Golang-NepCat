@@ -273,3 +273,12 @@ func ExtractDeepseekResMessage(RobQQNum int64, input string) (string, bool) {
 
 	return "", false // 如果没有匹配到，返回空字符串和失败标志
 }
+
+// 获取修改头像链接
+func ExtractLinks(input string) []string {
+	// 正则表达式匹配 URL
+	re := regexp.MustCompile(`https?://[^\s]+`)
+	// 找到所有匹配的 URL
+	links := re.FindAllString(input, -1)
+	return links
+}

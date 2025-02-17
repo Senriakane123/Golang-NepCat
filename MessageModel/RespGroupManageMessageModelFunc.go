@@ -120,3 +120,10 @@ func SendRandomPic(ImageBase64strs []string, GroupId int64, info *[]PixivImage) 
 	//fmt.Println(message)
 	return message
 }
+
+func ChangeAvatarMessage(Url string) map[string]interface{} {
+	message := map[string]interface{}{
+		"file": Url, // 替换为你的QQ群号
+	}
+	return message
+}
