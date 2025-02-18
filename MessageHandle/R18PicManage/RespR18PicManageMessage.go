@@ -62,6 +62,7 @@ func (n *PicManage) HandlerInit() {
 		"随机涩图":    n.RandomPic,
 		"Tag涩图":   n.RandomPicByTagOrNum,
 		"开启R18模式": n.R18Enable,
+		"关闭R18模式": n.R18UnEnable,
 		//"关闭R18模式":
 		//"随机R18涩图"
 	}
@@ -309,7 +310,19 @@ func (n *PicManage) RandomPicByTagOrNum(message MessageModel.Message) {
 }
 
 func (n *PicManage) R18Enable(message MessageModel.Message) {
+
 	Params.R18 = 1
+	if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+		handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]"+"R18模式已打开"))
+	}
+}
+
+func (n *PicManage) R18UnEnable(message MessageModel.Message) {
+
+	Params.R18 = 0
+	if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+		handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]"+"R18模式已关闭"))
+	}
 }
 
 func (n *PicManage) PicReqRawMessageConfig(message MessageModel.Message) {
