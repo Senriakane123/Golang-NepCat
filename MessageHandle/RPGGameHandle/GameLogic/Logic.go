@@ -95,9 +95,9 @@ func (n *GameManageHandle) userRegister(message MessageModel.Message) {
 	newUser := GameDatamodel.UserInfo{
 		QQNum:         qqNum,
 		Name:          message.Sender.NickName,
-		Item:          "{1,1}",
+		Item:          "{\"1\":1}",
 		PetInfo:       []GameDatamodel.PersonalPetInfo{},
-		SignInDayCout: 2,
+		SignInDayCout: 1,
 		SignInTime:    time.Now(), // 赋值当前时间
 	}
 

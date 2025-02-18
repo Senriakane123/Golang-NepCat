@@ -46,7 +46,7 @@ func (n *NepCatHttpReq) Login() error {
 	}
 
 	// 2. 发送 HTTP POST 请求
-	url := baseURL + "/api/auth/login"
+	url := baseURL + "/api/auth/MusicGetLogic"
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return fmt.Errorf("创建请求失败: %v", err)

@@ -22,6 +22,7 @@ var serverMenu = []string{
 	"3 更换机器人头像（需要向机器人所有者获取管理权限，目前是测试开发阶段请求格式为'@Bot修改头像-图片url'） ",
 	"4 宠物系统（测试开发阶段）",
 	"5 DeepSeek（'@Bot接入deepseek'后进入ai聊天模式，再次'@Bot退出deepseek'则会退出AI聊天模式）",
+	"6 随机音乐推荐（'@Bot随机音乐推荐'，还在完善开发中）",
 }
 
 var childServerMenu5 = []string{

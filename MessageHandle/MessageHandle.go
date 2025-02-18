@@ -6,6 +6,7 @@ import (
 	"NepcatGoApiReq/MessageHandle/GroupMessageHandle"
 	"NepcatGoApiReq/MessageHandle/R18PicManage"
 	"NepcatGoApiReq/MessageHandle/RPGGameHandle/GameLogic"
+	"NepcatGoApiReq/MessageHandle/RandomMusic/MusicGetLogic"
 	"NepcatGoApiReq/MessageHandle/RobInfoManage"
 	"NepcatGoApiReq/MessageHandle/Tool"
 	"NepcatGoApiReq/MessageModel"
@@ -23,6 +24,12 @@ func MessageHandle(message MessageModel.Message) {
 		//解析是否需要服务
 		ServerMach := Tool.ParseServiceCommand(message.RawMessage)
 		if len(ServerMach) == 0 {
+			//音乐处理
+			var MusicHandle MusicGetLogic.MusicManageHandle
+			MusicHandle.HandlerInit()
+			if MusicHandle.HandleMusicManageMessage(message) {
+				return
+			}
 
 			//机器人信息管理
 			var RobInfoManageHandle RobInfoManage.GroupManageHandle

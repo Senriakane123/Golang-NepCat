@@ -7,6 +7,7 @@ import (
 	"NepcatGoApiReq/Websocket"
 	"encoding/json"
 	"fmt"
+	"strconv"
 )
 
 func LoginInDeepSeek(message MessageModel.Message) {
@@ -41,7 +42,8 @@ func LoginInDeepSeek(message MessageModel.Message) {
 	go Websocket.DeepSeekMessageHandler()
 	Websocket.CloseWebSocket() // 关闭默认 WebSocket
 	//CloseDeepSeekWebSocket() // 关闭之前的 DeepSeek 连接
-	Websocket.WebSocketInitForDeepSeek(string(NewWsServerInfo.Port)) // 先关闭普通 WebSocket，再连接 DeepSeek
+
+	Websocket.WebSocketInitForDeepSeek(strconv.Itoa(NewWsServerInfo.Port)) // 先关闭普通 WebSocket，再连接 DeepSeek
 }
 
 func LoginOutDeepSeek(message MessageModel.Message) {
