@@ -23,11 +23,12 @@ type GameManageHandle struct {
 func (n *GameManageHandle) HandlerInit() {
 	// 关键词映射到处理函数
 	var groupManagekeywordHandlers = map[string]func(MessageModel.Message){
-		"用户注册":     n.userRegister,
-		"获取宠物信息":   n.getPetInfo,
+		"用户注册":         n.userRegister,
+		"获取宠物信息":     n.getPetInfo,
 		"获取注册宠物列表": n.getEnableRegisPetList,
-		"等级查询":     n.levelQuery,
-		"每日签到":     n.dailySignIn,
+		"等级查询":         n.levelQuery,
+		"每日签到":         n.dailySignIn,
+		"道具箱":           n.ItemBoxGet,
 	}
 	n.Handler = groupManagekeywordHandlers
 }
@@ -368,6 +369,47 @@ func (n *GameManageHandle) dailySignIn(message MessageModel.Message) {
 		}
 	}
 
+}
+
+func (n *GameManageHandle) ItemBoxGet(message MessageModel.Message) {
+
+	var Userlist GameDatamodel.UserInfo
+	qqNum := message.Sender.UserID
+	itemmap := GameDatamodel.ReturnUserItemList() //item为map[int]int
+	var ItemList GameDatamodel.ItemList
+	//var UserItemList map[]
+
+	_, err := DBControlApi.Db.Where("userinfo", &Userlist, "QQNum = ?", qqNum)
+	if err != nil {
+		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+"查询用户信息失败"))
+		}
+		return
+	} else {
+
+		if Userlist.Item != "" {
+			err = json.Unmarshal([]byte(Userlist.Item), &itemmap)
+			if err != nil {
+				return
+			}
+		}
+		var idStrings []string
+		for ID, _ := range itemmap {
+			idStrings = append(idStrings, fmt.Sprintf("%d", ID))
+		}
+		idsStr := strings.Join(idStrings, ",")
+
+		// 执行查询
+		_, err = DBControlApi.Db.Where("allskilllist", &ItemList, "ID = ?", idsStr)
+		if err != nil {
+			if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+				handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+"查询物品失败"))
+			}
+			fmt.Println("Error querying database:", err)
+		} else {
+			fmt.Println("Query executed successfully.")
+		}
+	}
 }
 
 // 计算等级
