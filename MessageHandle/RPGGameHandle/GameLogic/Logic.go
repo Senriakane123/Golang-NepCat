@@ -409,6 +409,11 @@ func (n *GameManageHandle) ItemBoxGet(message MessageModel.Message) {
 		} else {
 			fmt.Println("Query executed successfully.")
 		}
+
+		//userItems := make(map[int]map[string]int)
+		//for _, item := range itemmap {
+		//
+		//}
 	}
 }
 
