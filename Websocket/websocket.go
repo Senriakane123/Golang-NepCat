@@ -94,11 +94,11 @@ func WebSocketInit() {
 }
 
 // 初始化 DeepSeek WebSocket
-func WebSocketInitForDeepSeek() {
+func WebSocketInitForDeepSeek(port string) {
 
 	serverURL := url.URL{
 		Scheme:   "ws",
-		Host:     "127.0.0.1:3002",
+		Host:     "127.0.0.1:" + port,
 		Path:     "/",
 		RawQuery: "access_token=",
 	}
@@ -148,6 +148,7 @@ func MessageHandler() {
 var DeepSeekMessageHandlerFunc func(string) // 定义回调函数
 
 func DeepSeekMessageHandler() {
+	//从新的dews的通道收取信息
 	for msg := range DeepseekmessageChannel {
 		if DeepSeekMessageHandlerFunc != nil {
 			DeepSeekMessageHandlerFunc(msg) // 触发回调，而不是直接调用 HandleDeepseekMessage

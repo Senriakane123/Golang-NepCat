@@ -49,6 +49,7 @@ func (n *DeepSeekManageHandle) HandleGroupManageMessage(message MessageModel.Mes
 	for _, keyword := range sortedKeywords {
 		if strings.HasPrefix(message.RawMessage, keyword) || strings.Contains(message.RawMessage, keyword) {
 			handler := n.Handler[keyword]
+			//第一次进行ds接入会把群号信息存入NowConnDSGroup
 			NowConnDSGroup = message.GroupID
 			handler(message)
 			return true // 处理完一个就返回，避免重复触发
@@ -76,15 +77,21 @@ func HandleDeepseekMessage(message string) {
 		fmt.Println("解析 JSON 失败:", err)
 		return
 	}
-
+	//判断消息类型和消息的
 	ResMsg, Boolen := Tool.ExtractDeepseekResMessage(msg.SelfID, msg.RawMessage)
 	if msg.PostType != "message" || msg.GroupID != NowConnDSGroup || !Boolen {
 		return
 	}
-
+	//这里疑似冗余代码
+	//////////////////////////////////////////////////
+	//////////////////////////////////////////////////
+	//////////////////////////////////////////////////
 	var DSHandle DeepSeekManageHandle
 	DSHandle.HandlerInit()
 	DSHandle.HandleGroupManageMessage(msg)
+	//////////////////////////////////////////////////
+	//////////////////////////////////////////////////
+	//////////////////////////////////////////////////
 
 	// 更新消息历史，保存当前消息
 	messageHistory = append(messageHistory, deepseek.OllamaChatMessage{
