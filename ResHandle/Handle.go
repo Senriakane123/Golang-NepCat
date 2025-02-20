@@ -2,6 +2,7 @@ package ResHandle
 
 import (
 	"NepcatGoApiReq/MessageHandle"
+	"NepcatGoApiReq/MessageHandle/DeepSeekReqHandle"
 	"NepcatGoApiReq/MessageModel"
 	"NepcatGoApiReq/Websocket"
 	"encoding/json"
@@ -49,7 +50,15 @@ func handleChatMessage(msg MessageModel.Message) {
 		go MessageHandle.MessageHandle(msg)
 		fmt.Println("暂定调用http回复")
 	case "private":
-		fmt.Println("消息，暂无处理")
+		//DS链接
+		go func() {
+			var DSHandle DeepSeekReqHandle.DeepSeekManageHandle
+			DSHandle.HandlerInit()
+			if DSHandle.HandleGroupManageMessage(msg) {
+				return
+			}
+		}()
+
 	}
 	//if msg.MessageType == "group" {
 	//	fmt.Printf("群聊消息，群ID: %d\n", msg.GroupID)

@@ -172,7 +172,7 @@ var messageHistory []deepseek.OllamaChatMessage // 保存消息历史
 //}
 
 func (n *DeepSeekManageHandle) HandleCloudDeepseekMessage(msg MessageModel.Message) {
-
+	
 	var rgsgroup []DSReqModel.RgsGroup
 	var sessionID string
 	_, err := DBControlApi.Db.Where("rgsgroup", &rgsgroup, "GroupID = ?", msg.GroupID)
