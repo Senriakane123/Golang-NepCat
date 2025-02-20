@@ -282,3 +282,16 @@ func ExtractLinks(input string) []string {
 	links := re.FindAllString(input, -1)
 	return links
 }
+
+// 解析需要传给ds机器人的语言部分
+func ExtractMessageForRob(input string) string {
+	// 使用正则表达式匹配 "你好" 部分
+	re := regexp.MustCompile(`\] (.+)`)
+	matches := re.FindStringSubmatch(input)
+
+	if len(matches) > 1 {
+		// 返回匹配到的内容
+		return matches[1]
+	}
+	return ""
+}

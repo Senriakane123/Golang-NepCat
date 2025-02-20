@@ -23,12 +23,12 @@ type GameManageHandle struct {
 func (n *GameManageHandle) HandlerInit() {
 	// 关键词映射到处理函数
 	var groupManagekeywordHandlers = map[string]func(MessageModel.Message){
-		"用户注册":         n.userRegister,
-		"获取宠物信息":     n.getPetInfo,
+		"用户注册":     n.userRegister,
+		"获取宠物信息":   n.getPetInfo,
 		"获取注册宠物列表": n.getEnableRegisPetList,
-		"等级查询":         n.levelQuery,
-		"每日签到":         n.dailySignIn,
-		"道具箱":           n.ItemBoxGet,
+		"等级查询":     n.levelQuery,
+		"每日签到":     n.dailySignIn,
+		"道具箱":      n.ItemBoxGet,
 	}
 	n.Handler = groupManagekeywordHandlers
 }
@@ -298,16 +298,17 @@ func (n *GameManageHandle) dailySignIn(message MessageModel.Message) {
 		// **获取当前时间**
 		now := time.Now()
 		lastSignIn := Userlist.SignInTime
-		fmt.Println(lastSignIn.Year(), now.Year(), lastSignIn.YearDay(), now.YearDay())
-		if lastSignIn.YearDay() == now.YearDay() {
+		fmt.Println(lastSignIn.Year(), now.Year(), lastSignIn.Day(), now.Day(), lastSignIn.Month(), now.Month())
+		if lastSignIn.Day() == now.Day() && lastSignIn.Month() == now.Month() {
 			if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
 				handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "[CQ:at,qq="+Tool.Int64toString(message.Sender.UserID)+"]\n"+"用户今日已经签到"))
 			}
 			return
 		}
 		// **按天判断是否中断**
-		if lastSignIn.Year() != now.Year() || lastSignIn.YearDay() != now.YearDay()-1 {
+		if lastSignIn.Year() != now.Year() || lastSignIn.Day() != now.Day()-1 {
 			Userlist.SignInDayCout = 1 // **断签，重置签到天数**
+			Userlist.SignInTime = time.Now()
 		} else {
 			Userlist.SignInDayCout++ // **连续签到，+1**
 			Userlist.SignInTime = time.Now()
@@ -319,27 +320,27 @@ func (n *GameManageHandle) dailySignIn(message MessageModel.Message) {
 			}
 		}
 		switch Userlist.SignInDayCout {
-		case 0:
+		case GameDatamodel.LOGIN_DAY_0:
 			ExpItemCode = 7
-			ExpCardNum = 500
-		case 1:
+			ExpCardNum = GameDatamodel.EXP_NUM_500
+		case GameDatamodel.LOGIN_DAY_1:
 			ExpItemCode = 1
-			ExpCardNum = 100
-		case 2:
+			ExpCardNum = GameDatamodel.EXP_NUM_100
+		case GameDatamodel.LOGIN_DAY_2:
 			ExpItemCode = 2
-			ExpCardNum = 150
-		case 3:
+			ExpCardNum = GameDatamodel.EXP_NUM_150
+		case GameDatamodel.LOGIN_DAY_3:
 			ExpItemCode = 3
-			ExpCardNum = 200
-		case 4:
+			ExpCardNum = GameDatamodel.EXP_NUM_200
+		case GameDatamodel.LOGIN_DAY_4:
 			ExpItemCode = 4
-			ExpCardNum = 250
-		case 5:
+			ExpCardNum = GameDatamodel.EXP_NUM_250
+		case GameDatamodel.LOGIN_DAY_5:
 			ExpItemCode = 5
-			ExpCardNum = 300
-		case 6:
+			ExpCardNum = GameDatamodel.EXP_NUM_300
+		case GameDatamodel.LOGIN_DAY_6:
 			ExpItemCode = 6
-			ExpCardNum = 350
+			ExpCardNum = GameDatamodel.EXP_NUM_350
 		}
 
 		// **通过 map 快速查找并更新**

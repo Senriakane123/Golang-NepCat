@@ -1,0 +1,21 @@
+package GameDatamodel
+
+const (
+	LOGIN_DAY_1 = 1
+	LOGIN_DAY_2 = 2
+	LOGIN_DAY_3 = 3
+	LOGIN_DAY_4 = 4
+	LOGIN_DAY_5 = 5
+	LOGIN_DAY_6 = 6
+	LOGIN_DAY_0 = 0
+)
+
+const (
+	EXP_NUM_100 = 100
+	EXP_NUM_150 = 150
+	EXP_NUM_200 = 200
+	EXP_NUM_250 = 250
+	EXP_NUM_300 = 300
+	EXP_NUM_350 = 350
+	EXP_NUM_500 = 500
+)

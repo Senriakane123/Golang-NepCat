@@ -1,7 +1,6 @@
 package WSmessageHandle
 
 import (
-	"NepcatGoApiReq/MessageHandle/DeepSeekReqHandle"
 	"NepcatGoApiReq/ResHandle"
 	"NepcatGoApiReq/Websocket"
 )
@@ -19,9 +18,9 @@ func MessageHandler() {
 var DeepSeekMessageHandlerFunc func(string) // 定义回调函数
 
 func DeepSeekMessageHandler() {
-	for msg := range Websocket.DeepseekmessageChannel {
-		//if DeepSeekMessageHandlerFunc != nil {
-		DeepSeekReqHandle.HandleDeepseekMessage(msg) // 触发回调，而不是直接调用 HandleDeepseekMessage
-		//}
-	}
+	//for msg := range Websocket.DeepseekmessageChannel {
+	//	//if DeepSeekMessageHandlerFunc != nil {
+	//	//DeepSeekReqHandle.HandleDeepseekMessage(msg) // 触发回调，而不是直接调用 HandleDeepseekMessage
+	//	//}
+	//}
 }
