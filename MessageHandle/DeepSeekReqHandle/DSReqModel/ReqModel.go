@@ -39,6 +39,12 @@ type RgsGroup struct {
 	SeessionID string `gorm:"type:varchar(255);not null;column:SeessionID"` // 表中字段名为 skill_name
 }
 
+type RgsPrivate struct {
+	ID        int    `gorm:"primaryKey;autoIncrement;column:ID"`
+	QQID      int    `gorm:"type:int;not null;column:QQID"`
+	SessionID string `gorm:"type:varchar(255);not null;column:SessionID"` // 表中字段名为 skill_name
+}
+
 // 结构体: 创建 Memory 的 API 响应
 type CreateMemoryResponse struct {
 	MemoryID  string `json:"memoryId"`

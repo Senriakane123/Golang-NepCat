@@ -18,6 +18,19 @@ func NormalRespMessage(GroupId int64, RespMessage string) map[string]interface{}
 	return message
 }
 
+func NormalPrivateRespMessage(UserID int64, RespMessage string) map[string]interface{} {
+	// 构造返回数据
+
+	// 构造返回数据
+	message := map[string]interface{}{
+		"user_id": UserID, // 私人ID
+		//"message": "[CQ:at,qq="+Int64toString(UserId)+"]",
+		"message": RespMessage,
+	}
+
+	return message
+}
+
 func NormalRespMessageType2(GroupId int64, RespMessage []string) map[string]interface{} {
 
 	var builder strings.Builder

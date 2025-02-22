@@ -81,13 +81,23 @@ func (n *DeepSeekManageHandle) HandleGroupManageMessage(message MessageModel.Mes
 	//var sessionID string
 	_, err := DBControlApi.Db.Where("adminuser", &AdminUser, "QQNum = ?", message.Sender.UserID)
 	if err != nil {
+		if message.MessageType == "private" {
+			if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_PRIVATE_MSG]; exists {
+				handler(ReqApiConst.SEND_PRIVATE_MSG, MessageModel.NormalPrivateRespMessage(message.Sender.UserID, "验证错误，或用户不具有管理权限,请请求最高管理员735439479获取管理权限"))
+			}
+		}
 		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "验证错误，或用户不具有管理权限"))
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "验证错误，或用户不具有管理权限,请请求最高管理员735439479获取管理权限"))
 		}
 	} else {
 		if len(AdminUser) == 0 {
+			if message.MessageType == "private" {
+				if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_PRIVATE_MSG]; exists {
+					handler(ReqApiConst.SEND_PRIVATE_MSG, MessageModel.NormalPrivateRespMessage(message.Sender.UserID, "用户不具有管理权限,请请求最高管理员735439479获取管理权限"))
+				}
+			}
 			if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-				handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "用户不具有管理权限"))
+				handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "用户不具有管理权限,请请求最高管理员735439479获取管理权限"))
 			}
 		}
 		for _, v := range AdminUser {
@@ -172,19 +182,45 @@ var messageHistory []deepseek.OllamaChatMessage // 保存消息历史
 //}
 
 func (n *DeepSeekManageHandle) HandleCloudDeepseekMessage(msg MessageModel.Message) {
-	
+
 	var rgsgroup []DSReqModel.RgsGroup
+	var rgsprivate []DSReqModel.RgsPrivate
 	var sessionID string
-	_, err := DBControlApi.Db.Where("rgsgroup", &rgsgroup, "GroupID = ?", msg.GroupID)
-	if err != nil {
-		sessionID = ""
-	} else {
-		if len(rgsgroup) == 0 {
+	var SendMsgtype string
+	var sendMsgID int64
+	var RobReqMsg string
+
+	if msg.MessageType == "private" {
+		_, err := DBControlApi.Db.Where("rgsprivate", &rgsprivate, "QQID = ?", msg.Sender.UserID)
+		if err != nil {
 			sessionID = ""
 		} else {
-			sessionID = rgsgroup[0].SeessionID
+			if len(rgsgroup) == 0 {
+				sessionID = ""
+			} else {
+				sessionID = rgsgroup[0].SeessionID
+			}
+
+		}
+		sendMsgID = msg.Sender.UserID
+		SendMsgtype = ReqApiConst.SEND_PRIVATE_MSG
+		RobReqMsg = msg.RawMessage
+	} else if msg.MessageType == "group" {
+		_, err := DBControlApi.Db.Where("rgsgroup", &rgsgroup, "GroupID = ?", msg.GroupID)
+		if err != nil {
+			sessionID = ""
+		} else {
+			if len(rgsgroup) == 0 {
+				sessionID = ""
+			} else {
+				sessionID = rgsgroup[0].SeessionID
+			}
+
 		}
 
+		sendMsgID = msg.GroupID
+		SendMsgtype = ReqApiConst.SEND_GROUP_MSG
+		RobReqMsg = Tool.ExtractMessageForRob(msg.RawMessage)
 	}
 
 	// 读取环境变量中的 API Key
@@ -197,11 +233,10 @@ func (n *DeepSeekManageHandle) HandleCloudDeepseekMessage(msg MessageModel.Messa
 	apiKey := "sk-efd428b2a41f42668dc8579cc6536281"
 	appID := "99d007044b5849e08b145ee2bfd6f174" // 替换为你的 APP_ID
 	url := fmt.Sprintf("https://dashscope.aliyuncs.com/api/v1/apps/%s/completion", appID)
-
 	// 创建请求体
 	requestBody := map[string]interface{}{
 		"input": map[string]string{
-			"prompt":     Tool.Int64toString(msg.Sender.UserID) + "-" + msg.Sender.NickName + "：" + Tool.ExtractMessageForRob(msg.RawMessage),
+			"prompt":     Tool.Int64toString(msg.Sender.UserID) + "-" + msg.Sender.NickName + "：" + RobReqMsg,
 			"session_id": sessionID, // 替换为实际上一轮对话的session_id
 		},
 		"parameters": map[string]interface{}{},
@@ -269,9 +304,26 @@ func (n *DeepSeekManageHandle) HandleCloudDeepseekMessage(msg MessageModel.Messa
 		if err != nil {
 			fmt.Printf("Failed to update rgsgroup: %v\n", err)
 		}
+
+	} else if len(rgsprivate) == 0 {
+		newPrivateMsgHandle := DSReqModel.RgsPrivate{
+			QQID:      int(msg.Sender.UserID),
+			SessionID: responseBody.Output.SessionID,
+		}
+		fmt.Println(responseBody.Output.SessionID)
+		err = DBControlApi.Db.Create(&newPrivateMsgHandle, "rgsprivate")
+		if err != nil {
+			fmt.Printf("Failed to update rgsprivate: %v\n", err)
+		}
+
 	}
-	if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-		handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(msg.GroupID, responseBody.Output.Text))
+	if handler, exists := HTTPReq.ReqApiMap[SendMsgtype]; exists {
+		if SendMsgtype == ReqApiConst.SEND_GROUP_MSG {
+			handler(SendMsgtype, MessageModel.NormalRespMessage(sendMsgID, responseBody.Output.Text))
+		} else {
+			handler(SendMsgtype, MessageModel.NormalPrivateRespMessage(sendMsgID, responseBody.Output.Text))
+		}
+
 	}
 	return
 
