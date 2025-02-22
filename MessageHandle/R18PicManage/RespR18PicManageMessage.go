@@ -1,6 +1,8 @@
 package R18PicManage
 
 import (
+	"NepcatGoApiReq/Database/DBControlApi"
+	"NepcatGoApiReq/Database/DBModel"
 	"NepcatGoApiReq/HTTPReq"
 	"NepcatGoApiReq/MessageHandle/Tool"
 	"NepcatGoApiReq/MessageModel"
@@ -310,6 +312,21 @@ func (n *PicManage) RandomPicByTagOrNum(message MessageModel.Message) {
 }
 
 func (n *PicManage) R18Enable(message MessageModel.Message) {
+	//n.historyFile = Tool.Int64toString(message.GroupID) + "_chat_history.json"
+	var AdminUser []DBModel.AdminUser
+	//var sessionID string
+	_, err := DBControlApi.Db.Where("adminuser", &AdminUser, "QQNum = ?", message.Sender.UserID)
+	if err != nil {
+		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "验证错误，或用户不具有管理权限,请请求最高管理员735439479获取管理权限"))
+		}
+		return
+	} else if len(AdminUser) == 0 {
+		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "验证错误，或用户不具有管理权限,请请求最高管理员735439479获取管理权限"))
+		}
+		return
+	}
 
 	Params.R18 = 1
 	if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
@@ -318,6 +335,21 @@ func (n *PicManage) R18Enable(message MessageModel.Message) {
 }
 
 func (n *PicManage) R18UnEnable(message MessageModel.Message) {
+
+	var AdminUser []DBModel.AdminUser
+	//var sessionID string
+	_, err := DBControlApi.Db.Where("adminuser", &AdminUser, "QQNum = ?", message.Sender.UserID)
+	if err != nil {
+		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "验证错误，或用户不具有管理权限,请请求最高管理员735439479获取管理权限"))
+		}
+		return
+	} else if len(AdminUser) == 0 {
+		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "验证错误，或用户不具有管理权限,请请求最高管理员735439479获取管理权限"))
+		}
+		return
+	}
 
 	Params.R18 = 0
 	if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {

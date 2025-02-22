@@ -4,10 +4,15 @@ import (
 	"NepcatGoApiReq/Database/DBControlApi"
 	"NepcatGoApiReq/Database/DBModel"
 	"NepcatGoApiReq/HTTPReq"
-	"NepcatGoApiReq/ReqApiConst"
-	"io"
-
 	"NepcatGoApiReq/MessageHandle/DeepSeekReqHandle/DSReqModel"
+	"NepcatGoApiReq/ReqApiConst"
+	"crypto/rand"
+	"encoding/hex"
+	"github.com/go-resty/resty/v2"
+	"io"
+	"log"
+	"regexp"
+
 	//"NepcatGoApiReq/MessageHandle/DeepSeekReqHandle/MemoryIDCtl"
 	"NepcatGoApiReq/MessageHandle/Tool"
 	"NepcatGoApiReq/MessageModel"
@@ -15,7 +20,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/p9966/go-deepseek"
 	"io/ioutil"
 	"net/http"
 	//"strings"
@@ -32,51 +36,21 @@ type DeepSeekManageHandle struct {
 	apiURL      string
 	apiKey      string
 	historyFile string
-	Handler     func(message MessageModel.Message)
+	Handler     map[string]func(message MessageModel.Message)
 	maxHistory  int64
 }
 
 func (n *DeepSeekManageHandle) HandlerInit() {
-	// 关键词映射到处理函数
-	//var groupManagekeywordHandlers = map[string]func(MessageModel.Message){
-	//	"接入deepseek": WebSocketControl.LoginInDeepSeek,
-	//	"退出deepseek": WebSocketControl.LoginOutDeepSeek,
-	//}
-	//n.Handler = groupManagekeywordHandlers
+	// 确保 map 被初始化
+	n.Handler = make(map[string]func(message MessageModel.Message))
 
-	//n.Handler = WebSocketControl.LoginInDeepSeek
-
-	n.Handler = n.HandleCloudDeepseekMessage
-	//n.maxHistory = 300
-	//n.apiURL = "https://dashscope.aliyuncs.com/api/v1/apps/99d007044b5849e08b145ee2bfd6f174/completion"
-
+	n.Handler["CloudDS"] = n.HandleCloudDeepseekMessage
+	n.Handler["LocalDS"] = n.HandleLocalDeepseekMessage
 }
-
-// **获取按长度排序的关键词**
-//func (n *DeepSeekManageHandle) getSortedKeywords() []string {
-//	keys := make([]string, 0, len(n.Handler))
-//	for key := range n.Handler {
-//		keys = append(keys, key)
-//	}
-//	sort.Slice(keys, func(i, j int) bool {
-//		return len(keys[i]) > len(keys[j])
-//	})
-//	return keys
-//}
 
 // 统一处理消息
 func (n *DeepSeekManageHandle) HandleGroupManageMessage(message MessageModel.Message) bool {
-	//sortedKeywords := n.getSortedKeywords() // 获取按长度排序的关键词
-	//for _, keyword := range sortedKeywords {
-	//	if strings.HasPrefix(message.RawMessage, keyword) || strings.Contains(message.RawMessage, keyword) {
-	//		handler := n.Handler[keyword]
-	//		//第一次进行ds接入会把群号信息存入NowConnDSGroup
-	//		NowConnDSGroup = message.GroupID
-	//		handler(message)
-	//		return true // 处理完一个就返回，避免重复触发
-	//	}
-	//}
-	//n.historyFile = Tool.Int64toString(message.GroupID) + "_chat_history.json"
+
 	var AdminUser []DBModel.AdminUser
 	//var sessionID string
 	_, err := DBControlApi.Db.Where("adminuser", &AdminUser, "QQNum = ?", message.Sender.UserID)
@@ -85,24 +59,31 @@ func (n *DeepSeekManageHandle) HandleGroupManageMessage(message MessageModel.Mes
 			if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_PRIVATE_MSG]; exists {
 				handler(ReqApiConst.SEND_PRIVATE_MSG, MessageModel.NormalPrivateRespMessage(message.Sender.UserID, "验证错误，或用户不具有管理权限,请请求最高管理员735439479获取管理权限"))
 			}
+			return false
 		}
 		if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
 			handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "验证错误，或用户不具有管理权限,请请求最高管理员735439479获取管理权限"))
 		}
+		return false
 	} else {
 		if len(AdminUser) == 0 {
-			if message.MessageType == "private" {
-				if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_PRIVATE_MSG]; exists {
-					handler(ReqApiConst.SEND_PRIVATE_MSG, MessageModel.NormalPrivateRespMessage(message.Sender.UserID, "用户不具有管理权限,请请求最高管理员735439479获取管理权限"))
-				}
-			}
-			if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-				handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "用户不具有管理权限,请请求最高管理员735439479获取管理权限"))
-			}
+			//n.Handler = n.HandleLocalDeepseekMessage
+			n.Handler["LocalDS"](message)
+			return true
+			//if message.MessageType == "private" {
+			//	if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_PRIVATE_MSG]; exists {
+			//		handler(ReqApiConst.SEND_PRIVATE_MSG, MessageModel.NormalPrivateRespMessage(message.Sender.UserID, "用户不具有管理权限,请请求最高管理员735439479获取管理权限"))
+			//	}
+			//	return false
+			//}
+			//if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
+			//	handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(message.GroupID, "用户不具有管理权限,请请求最高管理员735439479获取管理权限"))
+			//}
+			//return false
 		}
 		for _, v := range AdminUser {
 			if v.QQNum == int(message.Sender.UserID) {
-				n.Handler(message)
+				n.Handler["CloudDS"](message)
 				return true
 			}
 		}
@@ -110,77 +91,127 @@ func (n *DeepSeekManageHandle) HandleGroupManageMessage(message MessageModel.Mes
 	return true
 }
 
-type DeepseekClient struct {
-	Client deepseek.Client
+func (n *DeepSeekManageHandle) HandleLocalDeepseekMessage(msg MessageModel.Message) {
+	//1.判断私人还是群聊
+	//2.更具连接类型，先查询对应数据库，查看是否第一次连接
+	//3.第一次连接随机生成sessionID，存入数据库，不是第一次则会从数据库拿去sessionID
+	//4.更具不同连接类型解析不同发送给rob的消息
+	//5.组件发送rob请求
+	//6.更具不同连接类型返回内容
+	var rgsgroup []DSReqModel.RgsGroup
+	var rgsprivate []DSReqModel.RgsPrivate
+	var sessionID string
+	var SendMsgtype string
+	var sendMsgID int64
+	var RobReqMsg string
+
+	if msg.MessageType == "private" {
+		_, err := DBControlApi.Db.Where("localrgsprivate", &rgsprivate, "QQID = ?", msg.Sender.UserID)
+		if err != nil {
+			sessionID = GenerateSessionID()
+		} else {
+			if len(rgsprivate) == 0 {
+				sessionID = GenerateSessionID()
+			} else {
+				sessionID = rgsprivate[0].SessionID
+			}
+
+		}
+		//设置发送的群或者人
+		sendMsgID = msg.Sender.UserID
+		//设置该调用的类型
+		SendMsgtype = ReqApiConst.SEND_PRIVATE_MSG
+		//定制送个rob消息类型
+		RobReqMsg = msg.RawMessage
+	} else if msg.MessageType == "group" {
+		_, err := DBControlApi.Db.Where("localrgsgroup", &rgsgroup, "GroupID = ?", msg.GroupID)
+		if err != nil {
+			sessionID = GenerateSessionID()
+		} else {
+			if len(rgsgroup) == 0 {
+				sessionID = GenerateSessionID()
+			} else {
+				sessionID = rgsgroup[0].SeessionID
+			}
+
+		}
+
+		sendMsgID = msg.GroupID
+		SendMsgtype = ReqApiConst.SEND_GROUP_MSG
+		RobReqMsg = Tool.ExtractMessageForRob(msg.RawMessage)
+	}
+
+	client := resty.New()
+	apiKey := "NH8TBX3-DXSM2Z0-M1VT66A-XC3QD8V"
+	workspaceSlug := "forqqrobot" // **注意这里要用小写**
+	url := fmt.Sprintf("http://localhost:54079/api/v1/workspace/%s/chat", workspaceSlug)
+	//RobReqMsg = Tool.ExtractMessageForRob(msg.RawMessage)
+	resp, err := client.R().
+		SetHeader("Accept", "application/json").
+		SetHeader("Authorization", "Bearer "+apiKey).
+		SetHeader("Content-Type", "application/json").
+		SetBody(map[string]interface{}{
+			"message":   RobReqMsg,
+			"mode":      "chat", // **必须是 "query" 或 "chat"，不能用 "query | chat"**
+			"sessionId": sessionID,
+		}).
+		Post(url)
+
+	if err != nil {
+		log.Fatalf("请求失败: %v", err)
+	}
+
+	// 解析 JSON 响应
+	var responseBody DSReqModel.LocalResponse
+	err = json.Unmarshal([]byte(resp.String()), &responseBody)
+	//fmt.Println(string(body))
+	//fmt.Println(responseBody)
+	if err != nil {
+		return
+	}
+	fmt.Println(responseBody.TextResponse)
+	// 使用正则表达式去除 <think> 标签中的内容
+	re := regexp.MustCompile(`<think>.*?</think>`)
+	Resp := re.ReplaceAllString(responseBody.TextResponse, "")
+
+	//fmt.Println("响应:", resp.String())
+
+	if len(rgsgroup) == 0 && msg.MessageType == "group" {
+		//var newGroupHandle DSReqModel.RgsGroup
+		newGroupHandle := DSReqModel.RgsGroup{
+			GroupID:    int(msg.GroupID),
+			SeessionID: sessionID,
+		}
+		//fmt.Println(responseBody.Output.SessionID)
+		err = DBControlApi.Db.Create(&newGroupHandle, "localrgsgroup")
+		if err != nil {
+			fmt.Printf("Failed to update rgsgroup: %v\n", err)
+		}
+
+	} else if len(rgsprivate) == 0 && msg.MessageType == "private" {
+		newPrivateMsgHandle := DSReqModel.RgsPrivate{
+			QQID:      int(msg.Sender.UserID),
+			SessionID: sessionID,
+		}
+		//fmt.Println(responseBody.Output.SessionID)
+		err = DBControlApi.Db.Create(&newPrivateMsgHandle, "localrgsprivate")
+		if err != nil {
+			fmt.Printf("Failed to update rgsprivate: %v\n", err)
+		}
+
+	}
+
+	if handler, exists := HTTPReq.ReqApiMap[SendMsgtype]; exists {
+		if SendMsgtype == ReqApiConst.SEND_GROUP_MSG {
+			handler(SendMsgtype, MessageModel.NormalRespMessage(sendMsgID, Resp))
+		} else if SendMsgtype == ReqApiConst.SEND_PRIVATE_MSG {
+			handler(SendMsgtype, MessageModel.NormalPrivateRespMessage(sendMsgID, Resp))
+		}
+
+	}
+	return
+
 }
-
-//func InitDeepSeekHandler() {
-//	//var DSClient DeepseekClient
-//	// 这里注册回调，避免循环导入
-//	Websocket.DeepSeekMessageHandlerFunc = HandleDeepseekMessage
-//}
-
-var messageHistory []deepseek.OllamaChatMessage // 保存消息历史
-
-//func HandleDeepseekMessage(msg MessageModel.Message) {
-//	//var msg MessageModel.Message
-//	//err := json.Unmarshal([]byte(message), &msg)
-//	//if err != nil {
-//	//	fmt.Println("解析 JSON 失败:", err)
-//	//	return
-//	//}
-//	//判断消息类型和消息的
-//	ResMsg, Boolen := Tool.ExtractDeepseekResMessage(msg.SelfID, msg.RawMessage)
-//	if msg.PostType != "message" || msg.GroupID != NowConnDSGroup || !Boolen {
-//		return
-//	}
-//	//这里疑似冗余代码
-//	//////////////////////////////////////////////////
-//	//////////////////////////////////////////////////
-//	//////////////////////////////////////////////////
-//	var DSHandle DeepSeekManageHandle
-//	DSHandle.HandlerInit()
-//	DSHandle.HandleGroupManageMessage(msg)
-//	//////////////////////////////////////////////////
-//	//////////////////////////////////////////////////
-//	//////////////////////////////////////////////////
-//
-//	// 更新消息历史，保存当前消息
-//	messageHistory = append(messageHistory, deepseek.OllamaChatMessage{
-//		Role:    "user",
-//		Content: ResMsg,
-//	})
-//
-//	client := deepseek.Client{
-//		BaseUrl: "http://localhost:11434",
-//	}
-//
-//	// 使用历史消息来构建请求
-//	request := deepseek.OllamaChatRequest{
-//		Model:    "deepseek-r1:8b",
-//		Messages: messageHistory, // 传递整个历史消息
-//	}
-//
-//	// 发送请求并获取响应
-//	response, err := client.CreateOllamaChatCompletion(context.TODO(), &request)
-//	if err != nil {
-//		log.Fatalf("Error: %v", err)
-//	}
-//
-//	// 将模型的回复加入历史记录
-//	messageHistory = append(messageHistory, deepseek.OllamaChatMessage{
-//		Role:    "assistant",
-//		Content: response.Message.Content,
-//	})
-//
-//	// 发送响应到群聊
-//	if handler, exists := HTTPReq.ReqApiMap[ReqApiConst.SEND_GROUP_MSG]; exists {
-//		handler(ReqApiConst.SEND_GROUP_MSG, MessageModel.NormalRespMessage(msg.GroupID, "[CQ:at,qq="+Tool.Int64toString(msg.Sender.UserID)+"]"+response.Message.Content))
-//	}
-//
-//	fmt.Println(response.Message.Content)
-//}
-
 func (n *DeepSeekManageHandle) HandleCloudDeepseekMessage(msg MessageModel.Message) {
 
 	var rgsgroup []DSReqModel.RgsGroup
@@ -202,8 +233,11 @@ func (n *DeepSeekManageHandle) HandleCloudDeepseekMessage(msg MessageModel.Messa
 			}
 
 		}
+		//设置发送的群或者人
 		sendMsgID = msg.Sender.UserID
+		//设置该调用的类型
 		SendMsgtype = ReqApiConst.SEND_PRIVATE_MSG
+		//定制送个rob消息类型
 		RobReqMsg = msg.RawMessage
 	} else if msg.MessageType == "group" {
 		_, err := DBControlApi.Db.Where("rgsgroup", &rgsgroup, "GroupID = ?", msg.GroupID)
@@ -293,7 +327,7 @@ func (n *DeepSeekManageHandle) HandleCloudDeepseekMessage(msg MessageModel.Messa
 		return
 	}
 
-	if len(rgsgroup) == 0 {
+	if len(rgsgroup) == 0 && msg.MessageType == "group" {
 		//var newGroupHandle DSReqModel.RgsGroup
 		newGroupHandle := DSReqModel.RgsGroup{
 			GroupID:    int(msg.GroupID),
@@ -305,7 +339,7 @@ func (n *DeepSeekManageHandle) HandleCloudDeepseekMessage(msg MessageModel.Messa
 			fmt.Printf("Failed to update rgsgroup: %v\n", err)
 		}
 
-	} else if len(rgsprivate) == 0 {
+	} else if len(rgsprivate) == 0 && msg.MessageType == "private" {
 		newPrivateMsgHandle := DSReqModel.RgsPrivate{
 			QQID:      int(msg.Sender.UserID),
 			SessionID: responseBody.Output.SessionID,
@@ -320,7 +354,7 @@ func (n *DeepSeekManageHandle) HandleCloudDeepseekMessage(msg MessageModel.Messa
 	if handler, exists := HTTPReq.ReqApiMap[SendMsgtype]; exists {
 		if SendMsgtype == ReqApiConst.SEND_GROUP_MSG {
 			handler(SendMsgtype, MessageModel.NormalRespMessage(sendMsgID, responseBody.Output.Text))
-		} else {
+		} else if SendMsgtype == ReqApiConst.SEND_PRIVATE_MSG {
 			handler(SendMsgtype, MessageModel.NormalPrivateRespMessage(sendMsgID, responseBody.Output.Text))
 		}
 
@@ -359,4 +393,14 @@ func (n *DeepSeekManageHandle) trimHistory(messages []DSReqModel.ChatMessage) []
 		return messages[len(messages)-int(n.maxHistory):] // 只保留最后 maxHistory 条
 	}
 	return messages
+}
+
+// GenerateSessionID 生成一个随机的 sessionId（长度 16 字节 = 32 个十六进制字符）
+func GenerateSessionID() string {
+	bytes := make([]byte, 16) // 16 字节 = 128 位
+	_, err := rand.Read(bytes)
+	if err != nil {
+		panic("无法生成随机 sessionId")
+	}
+	return hex.EncodeToString(bytes) // 转换为十六进制字符串
 }

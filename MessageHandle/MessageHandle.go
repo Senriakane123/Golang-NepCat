@@ -15,6 +15,8 @@ import (
 	"strings"
 )
 
+var BLocalAIRep bool
+
 func MessageHandle(message MessageModel.Message) {
 
 	_, QQNumberList := Tool.AtQQNumber(message.RawMessage)

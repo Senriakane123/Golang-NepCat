@@ -74,3 +74,23 @@ type ResponseBody struct {
 	Status    int    `json:"status_code"`
 	Message   string `json:"message"`
 }
+
+// 定义结构体与 JSON 响应对应
+type LocalResponse struct {
+	ID           string     `json:"id"`
+	Type         string     `json:"type"`
+	Close        bool       `json:"close"`
+	Error        string     `json:"error"`
+	ChatID       int        `json:"chatId"`
+	TextResponse string     `json:"textResponse"`
+	Sources      []struct{} `json:"sources"` // 空结构体数组
+	Metrics      Metrics    `json:"metrics"`
+}
+
+type Metrics struct {
+	PromptTokens     int     `json:"prompt_tokens"`
+	CompletionTokens int     `json:"completion_tokens"`
+	TotalTokens      int     `json:"total_tokens"`
+	OutputTps        float64 `json:"outputTps"`
+	Duration         float64 `json:"duration"`
+}
